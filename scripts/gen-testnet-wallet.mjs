@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * SpendOS — Testnet wallet üretici
- * Sadece testnet için kullan. Private key'i kimseyle paylaşma.
+ * SpendOS — Testnet wallet generator
+ * For testnet use only. Never share your private key.
  *
- * Kullanım:
+ * Usage:
  *   node scripts/gen-testnet-wallet.mjs
- *   node scripts/gen-testnet-wallet.mjs --write-env   (.env.local'ı günceller)
+ *   node scripts/gen-testnet-wallet.mjs --write-env   (writes to .env.local)
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -17,20 +17,20 @@ const wallet = Wallet.createRandom();
 const privateKey = wallet.privateKey;
 const address   = wallet.address;
 
-// Terminale sadece PUBLIC adres + talimatlar bas — key asla stdout'a yazılmaz
+// Only print PUBLIC address + instructions to terminal — key is never written to stdout
 console.log("\n╔══════════════════════════════════════════════════════════════╗");
-console.log("║           SpendOS Testnet Wallet — YENİ OLUŞTURULDU         ║");
+console.log("║              SpendOS Testnet Wallet — GENERATED              ║");
 console.log("╚══════════════════════════════════════════════════════════════╝");
-console.log(`\n  Cüzdan Adresi: ${address}`);
-console.log(`\n  Private key   → ${writeEnv ? ".env.local dosyasına yazıldı" : "sadece bellekte (--write-env ile kaydet)"}`);
-console.log("\n  ── Sonraki Adımlar ───────────────────────────────────────────");
-console.log("  1. Bu adrese Base Sepolia ETH gönder (gas için ~0.01 ETH yeterli)");
+console.log(`\n  Wallet Address: ${address}`);
+console.log(`\n  Private key   → ${writeEnv ? "written to .env.local" : "in memory only (use --write-env to save)"}`);
+console.log("\n  ── Next Steps ────────────────────────────────────────────────");
+console.log("  1. Send Base Sepolia ETH to this address (~0.01 ETH for gas)");
 console.log("     Faucet: https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet");
-console.log("  2. Bu adrese Base Sepolia USDC gönder (test için ~10 USDC)");
-console.log("     Faucet: https://faucet.circle.com  (Base Sepolia seç)");
-console.log("  3. Fonlama tamamlanınca deploy çalıştır:");
+console.log("  2. Send Base Sepolia USDC to this address (~10 USDC for testing)");
+console.log("     Faucet: https://faucet.circle.com  (select Base Sepolia)");
+console.log("  3. Once funded, run deploy:");
 console.log("     node scripts/deploy-spendos-vault.mjs --network base-sepolia --mock-usdc");
-console.log("\n  ── Fon Durumu Takip ─────────────────────────────────────────");
+console.log("\n  ── Track Funding ────────────────────────────────────────────");
 console.log(`  https://sepolia.basescan.org/address/${address}`);
 console.log("─────────────────────────────────────────────────────────────────\n");
 
@@ -46,7 +46,7 @@ if (writeEnv) {
     .replace(/^SPENDOS_AGENT_VAULT=.*$/m,              `SPENDOS_AGENT_VAULT=${address}`);
 
   writeFileSync(envPath, content, "utf8");
-  console.log("  ✓ .env.local güncellendi (PRIVATE_KEY, OPERATOR, AGENT_VAULT)\n");
+  console.log("  ✓ .env.local updated (PRIVATE_KEY, OPERATOR, AGENT_VAULT)\n");
 } else {
-  console.log("  ℹ  .env.local'ı güncellemek için: node scripts/gen-testnet-wallet.mjs --write-env\n");
+  console.log("  ℹ  To update .env.local run: node scripts/gen-testnet-wallet.mjs --write-env\n");
 }

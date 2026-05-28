@@ -1,42 +1,42 @@
-# SpendOS — Base Sepolia Deploy Rehberi
+# SpendOS — Base Sepolia Deployment Guide
 
-## 1. Ön Hazırlık
+## 1. Prerequisites
 
-### Testnet cüzdanı kur
-- MetaMask'ta yeni bir cüzdan oluştur (SADECE testnet için)
-- Private key'i kopyala
-- Base Sepolia ETH al: https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet
+### Set up a testnet wallet
+- Create a new wallet in MetaMask (for TESTNET use only)
+- Copy the private key
+- Get Base Sepolia ETH: https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet
 
-### Base Sepolia USDC al
-- https://faucet.circle.com → "Base Sepolia" seç → cüzdan adresine USDC gönder
-- 10 USDC yeterli
+### Get Base Sepolia USDC
+- https://faucet.circle.com → select "Base Sepolia" → send USDC to your wallet address
+- 10 USDC is sufficient
 
 ---
 
-## 2. .env.local Doldur
+## 2. Fill in .env.local
 
 ```
 cd ~/Documents/Codex/2026-05-25/base-a-nda-ai-agent-trendi
 ```
 
-`.env.local` dosyasında şunları doldur:
+Fill in the following fields in `.env.local`:
 
 ```bash
 PRIVATE_KEY=0x<testnet-private-key>
 SPENDOS_DEPLOYER_PRIVATE_KEY=0x<testnet-private-key>
-SPENDOS_OPERATOR_PRIVATE_KEY=0x<operator-private-key>   # aynı ya da farklı cüzdan olabilir
+SPENDOS_OPERATOR_PRIVATE_KEY=0x<operator-private-key>   # can be the same wallet or a different one
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
 ```
 
 ---
 
-## 3. Dry-run (risk yok, sadece kontrol)
+## 3. Dry-run (no risk, validation only)
 
 ```bash
 node scripts/deploy-spendos-vault.mjs --dry-run
 ```
 
-Çıktı şöyle görünmeli:
+Expected output:
 ```json
 {
   "status": "dry_run",
@@ -52,21 +52,21 @@ node scripts/deploy-spendos-vault.mjs --dry-run
 ## 4. Deploy
 
 ```bash
-# Base Sepolia'ya deploy et (MockUSDC ile — Circle faucet USDC yoksa)
+# Deploy to Base Sepolia with MockUSDC (if you don't have Circle faucet USDC)
 node scripts/deploy-spendos-vault.mjs --network base-sepolia --mock-usdc
 
-# YA DA Circle faucet USDC kullan (USDC_ADDRESS env'de olmalı)
+# OR use Circle faucet USDC (USDC_ADDRESS must be set in env)
 USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e \
   node scripts/deploy-spendos-vault.mjs --network base-sepolia
 ```
 
-> Circle'ın Base Sepolia USDC adresi: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
+> Circle's Base Sepolia USDC address: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
 ---
 
-## 5. .env.local'ı Deploy Çıktısıyla Güncelle
+## 5. Update .env.local with Deploy Output
 
-Deploy tamamlandığında terminal şöyle bir çıktı verir:
+When the deploy completes, the terminal will print something like:
 
 ```json
 {
@@ -77,7 +77,7 @@ Deploy tamamlandığında terminal şöyle bir çıktı verir:
 }
 ```
 
-Bu değerleri `.env.local`'a ekle:
+Add these values to `.env.local`:
 
 ```bash
 SPENDOS_VAULT_ADDRESS=0x<vaultAddress>
@@ -86,56 +86,56 @@ USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
 
 ---
 
-## 6. Agent Vault'u Kayıt Et ve Finanse Et
+## 6. Register and Fund the Agent Vault
 
 ```bash
-# Agent vault adresini ayarla (.env.local'da)
+# Set the agent vault address in .env.local
 SPENDOS_AGENT_VAULT=0x<agent-wallet-address>
 
-# Vault'a kaydol
+# Check vault status
 node scripts/vault-admin.mjs status
 
-# Policy authorize et
+# Authorize policy
 node scripts/vault-admin.mjs authorize-policy
 
-# USDC gönder (10 USDC)
+# Send USDC (10 USDC)
 node scripts/vault-admin.mjs fund --amount 10
 ```
 
 ---
 
-## 7. Proxy'yi Live Moduyla Başlat
+## 7. Start Proxy in Live Mode
 
 ```bash
 ./start.sh
 ```
 
-Proxy artık `.env.local`'daki vault adresine gerçek onchain işlemler yapabilir.
+The proxy can now perform real on-chain transactions against the vault address in `.env.local`.
 
 ---
 
-## 8. Frontend'den Live Vault Kontrolü
+## 8. Live Vault Check from Frontend
 
-1. Tarayıcıda `http://127.0.0.1:4180` aç
-2. **Launch App** → **Vault** tab'ına git
-3. **Run Launch Check** butonuna bas
-4. 7/7 check geçerse sistem canlı
+1. Open `http://127.0.0.1:4180` in your browser
+2. Click **Launch App** → go to the **Vault** tab
+3. Click **Run Launch Check**
+4. If all 7/7 checks pass, the system is live
 
 ---
 
-## Basescan Takip
+## Basescan
 
 - https://sepolia.basescan.org/address/<SPENDOS_VAULT_ADDRESS>
 
 ---
 
-## Mainnet'e Geçiş (Gelecek)
+## Mainnet Migration (Future)
 
-Mainnet deploy için:
+For mainnet deploy:
 ```bash
 PRIVATE_KEY=0x<mainnet-key> \
 USDC_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
   node scripts/deploy-spendos-vault.mjs --network base
 ```
 
-⚠️ Mainnet'te gerçek fon harcanır. Önce Sepolia'da tam test yap.
+> Real funds will be spent on mainnet. Run a full test on Sepolia first.

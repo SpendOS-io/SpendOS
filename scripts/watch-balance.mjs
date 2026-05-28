@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * SpendOS — Cüzdan bakiye izleyici
- * ETH ve USDC gelince bildirim verir, sonraki adımları gösterir.
+ * SpendOS — Wallet balance watcher
+ * Notifies when ETH and USDC arrive, shows next steps.
  *
- * Kullanım:
+ * Usage:
  *   node scripts/watch-balance.mjs
- *   node scripts/watch-balance.mjs --once   (tek kontrol, çık)
+ *   node scripts/watch-balance.mjs --once   (single check, exit)
  */
 
 import { Contract, JsonRpcProvider, formatEther, formatUnits, getAddress } from "ethers";
@@ -19,7 +19,7 @@ const address  = process.env.SPENDOS_OPERATOR_ADDRESS || process.env.SPENDOS_AGE
 const rpcUrl   = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
 
 if (!address) {
-  console.error("SPENDOS_OPERATOR_ADDRESS veya SPENDOS_AGENT_VAULT env eksik.");
+  console.error("SPENDOS_OPERATOR_ADDRESS or SPENDOS_AGENT_VAULT env missing.");
   process.exit(1);
 }
 
@@ -35,7 +35,7 @@ async function check() {
 
   const eth  = Number(formatEther(ethBal));
   const usd  = Number(formatUnits(usdcBal, 6));
-  const time = new Date().toLocaleTimeString("tr-TR");
+  const time = new Date().toLocaleTimeString("en-US");
 
   const ethOk  = eth  >= 0.005;
   const usdcOk = usd  >= 1;
@@ -43,27 +43,27 @@ async function check() {
   console.log(`[${time}] block ${block} | ETH: ${eth.toFixed(4)} ${ethOk ? "✓" : "✗"} | USDC: ${usd.toFixed(2)} ${usdcOk ? "✓" : "✗"}`);
 
   if (ethOk && usdcOk) {
-    console.log("\n  ✓ ETH ve USDC alındı — deploy'a geçebilirsin:\n");
+    console.log("\n  ✓ ETH and USDC received — ready to deploy:\n");
     console.log("    USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e \\");
     console.log("      node scripts/deploy-spendos-vault.mjs --network base-sepolia\n");
-    console.log("    veya MockUSDC ile (Circle faucet gerekmez):\n");
+    console.log("    or with MockUSDC (no Circle faucet needed):\n");
     console.log("    node scripts/deploy-spendos-vault.mjs --network base-sepolia --mock-usdc\n");
     return true;
   }
 
   if (!ethOk) {
-    console.log("    → ETH bekleniyor: https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet");
+    console.log("    → Waiting for ETH: https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet");
   }
   if (!usdcOk) {
-    console.log("    → USDC bekleniyor: https://faucet.circle.com  (Base Sepolia seç)");
-    console.log("    → Ya da --mock-usdc ile deploy et, USDC gerekmez");
+    console.log(`    → Waiting for USDC: https://faucet.circle.com  (select Base Sepolia)`);
+    console.log("    → Or deploy with --mock-usdc, no USDC needed");
   }
 
   return false;
 }
 
-console.log(`\n  SpendOS — Bakiye İzleyici`);
-console.log(`  Adres  : ${address}`);
+console.log(`\n  SpendOS — Balance Watcher`);
+console.log(`  Address: ${address}`);
 console.log(`  RPC    : ${rpcUrl}`);
 console.log(`  Basescan: https://sepolia.basescan.org/address/${address}\n`);
 

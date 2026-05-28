@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * SpendOS — Deploy sonrası otomatik vault kurulum scripti
+ * SpendOS — Post-deploy automatic vault setup script
  *
- * Deploy tamamlandıktan sonra tek komutla:
- *   1. Agent vault kaydeder (registerAgent)
- *   2. Proxy operatörünü yetkilendirir (setOperator)
- *   3. MockUSDC ise mint eder (--mock-usdc ile)
- *   4. Agent vault'u finanse eder (fundAgent)
- *   5. Policy imzalar ve onaylar (authorizePolicy)
- *   6. .env.local'ı contract adresleriyle günceller
- *   7. Vault durumunu doğrular
+ * After deploy, runs in one command:
+ *   1. Registers agent vault (registerAgent)
+ *   2. Authorizes proxy operator (setOperator)
+ *   3. Mints MockUSDC if needed (with --mock-usdc)
+ *   4. Funds agent vault (fundAgent)
+ *   5. Signs and approves policy (authorizePolicy)
+ *   6. Updates .env.local with contract addresses
+ *   7. Verifies vault status
  *
- * Kullanım:
+ * Usage:
  *   node scripts/post-deploy-setup.mjs
  *   node scripts/post-deploy-setup.mjs --mock-usdc --fund-amount 20
  *   node scripts/post-deploy-setup.mjs --dry-run
@@ -45,7 +45,7 @@ function hasArg(name) {
 }
 
 function readJson(path) {
-  if (!existsSync(path)) throw new Error(`Dosya bulunamadı: ${path}`);
+  if (!existsSync(path)) throw new Error(`File not found: ${path}`);
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
@@ -85,7 +85,7 @@ async function main() {
   const txLim     = env("SPENDOS_PER_TRANSACTION_LIMIT", "0.25");
 
   console.log("\n╔══════════════════════════════════════════════════════════════╗");
-  console.log("║          SpendOS — Deploy Sonrası Vault Kurulumu            ║");
+  console.log("║             SpendOS — Post-Deploy Vault Setup               ║");
   console.log("╚══════════════════════════════════════════════════════════════╝");
   console.log(`  Network    : ${network}`);
   console.log(`  Dry-run    : ${dryRun}`);
@@ -95,15 +95,15 @@ async function main() {
   console.log(`  Operator   : ${operator || "ENV MISSING"}`);
   console.log("");
 
-  if (!privKey)    throw new Error("PRIVATE_KEY eksik — .env.local'ı kontrol et");
-  if (!agentVault) throw new Error("SPENDOS_AGENT_VAULT eksik — .env.local'ı kontrol et");
-  if (!operator)   throw new Error("SPENDOS_OPERATOR_ADDRESS eksik — .env.local'ı kontrol et");
+  if (!privKey)    throw new Error("PRIVATE_KEY missing — check .env.local");
+  if (!agentVault) throw new Error("SPENDOS_AGENT_VAULT missing — check .env.local");
+  if (!operator)   throw new Error("SPENDOS_OPERATOR_ADDRESS missing — check .env.local");
 
   const deploymentPath = latestDeploymentFile();
   if (!existsSync(deploymentPath)) {
     throw new Error(
-      `Deployment dosyası bulunamadı: ${deploymentPath}\n` +
-      "  Önce deploy çalıştır:\n" +
+      `Deployment file not found: ${deploymentPath}\n` +
+      "  Run deploy first:\n" +
       "  node scripts/deploy-spendos-vault.mjs --network base-sepolia --mock-usdc"
     );
   }
@@ -117,7 +117,7 @@ async function main() {
   console.log("");
 
   if (dryRun) {
-    console.log("  [DRY-RUN] Gerçek işlem yapılmıyor. ENV ve deployment dosyaları OK.\n");
+    console.log("  [DRY-RUN] No real transactions will be made. ENV and deployment files OK.\n");
     return;
   }
 
@@ -133,26 +133,26 @@ async function main() {
   console.log(`  Owner addr : ${owner}`);
   console.log(`  Chain ID   : ${chainId}`);
   console.log("");
-  console.log("  ── Adımlar ─────────────────────────────────────────────────");
+  console.log("  ── Steps ───────────────────────────────────────────────────");
 
   // 1. Register agent vault
   let alreadyRegistered = false;
-  await step("Agent vault kaydı kontrol", async () => {
+  await step("Check agent vault registration", async () => {
     const policy = await vault.policies(getAddress(agentVault));
     alreadyRegistered = policy.owner !== "0x0000000000000000000000000000000000000000";
   });
 
   if (!alreadyRegistered) {
-    await step("registerAgent çağrısı", async () => {
+    await step("Call registerAgent", async () => {
       const tx = await vault.registerAgent(getAddress(agentVault));
       await tx.wait();
     });
   } else {
-    console.log("  Agent vault zaten kayıtlı — atlandı");
+    console.log("  Agent vault already registered — skipped");
   }
 
   // 2. Set operator
-  await step("setOperator — proxy yetkilendirme", async () => {
+  await step("setOperator — authorize proxy", async () => {
     const tx = await vault.setOperator(getAddress(operator), true);
     await tx.wait();
   });
@@ -199,7 +199,7 @@ async function main() {
   );
   const signature = await wallet.signMessage(getBytes(messageHash));
 
-  await step("authorizePolicy imzalama ve onaylama", async () => {
+  await step("Sign and submit authorizePolicy", async () => {
     const tx = await vault.authorizePolicy(
       getAddress(agentVault), dailyLimitUnits, txLimitUnits, policyDigest, signature
     );
@@ -207,7 +207,7 @@ async function main() {
   });
 
   // 6. Update .env.local
-  await step(".env.local güncelleme", async () => {
+  await step("Update .env.local", async () => {
     const envPath = join(ROOT, ".env.local");
     let content = existsSync(envPath) ? readFileSync(envPath, "utf8") : "";
     const set = (key, val) => {
@@ -224,7 +224,7 @@ async function main() {
 
   // 7. Final status check
   console.log("");
-  console.log("  ── Vault Durumu ─────────────────────────────────────────────");
+  console.log("  ── Vault Status ─────────────────────────────────────────────");
   const policy = await vault.policies(getAddress(agentVault));
   const balance = await usdc.balanceOf(getAddress(agentVault)).catch(() => null);
   console.log(`  Owner           : ${policy.owner}`);
@@ -235,7 +235,7 @@ async function main() {
   console.log(`  Wallet balance  : ${balance !== null ? formatUnits(balance, 6) : "—"} USDC`);
   console.log(`  Policy digest   : ${policyDigest.slice(0, 18)}...`);
   console.log("");
-  console.log("  ✓ Vault kurulumu tamamlandı. Proxy'yi yeniden başlat:");
+  console.log("  ✓ Vault setup complete. Restart the proxy:");
   console.log("    ./start.sh");
   console.log("");
   console.log("  Basescan:");
@@ -244,6 +244,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(`\n  ✗ HATA: ${err.message}\n`);
+  console.error(`\n  ✗ ERROR: ${err.message}\n`);
   process.exitCode = 1;
 });

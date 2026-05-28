@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SpendOS — tek komutla tüm servisleri başlat
+# SpendOS — start all services with a single command
 set -e
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -9,7 +9,7 @@ X402_PORT=4192
 
 cleanup() {
   echo ""
-  echo "[SpendOS] Servisler durduruluyor..."
+  echo "[SpendOS] Stopping services..."
   kill "$PROXY_PID" 2>/dev/null || true
   kill "$X402_PID" 2>/dev/null || true
   kill "$FRONTEND_PID" 2>/dev/null || true
@@ -17,48 +17,48 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-# .env.local varsa yükle
+# Load .env.local if it exists
 if [ -f "$ROOT/.env.local" ]; then
   set -a
   # shellcheck source=/dev/null
   source "$ROOT/.env.local"
   set +a
-  echo "[SpendOS] .env.local yüklendi"
+  echo "[SpendOS] .env.local loaded"
 fi
 
-# Mevcut port kullanıcılarını temizle (soft kill — force değil)
+# Kill any existing processes on the ports (soft kill — not force)
 for port in $FRONTEND_PORT $PROXY_PORT $X402_PORT; do
   pids=$(lsof -ti :"$port" 2>/dev/null || true)
   if [ -n "$pids" ]; then
-    echo "[SpendOS] Port $port temizleniyor (PID: $pids)"
+    echo "[SpendOS] Clearing port $port (PID: $pids)"
     echo "$pids" | xargs kill 2>/dev/null || true
     sleep 1
   fi
 done
 
-# Proxy backend başlat
-echo "[SpendOS] Proxy başlatılıyor → http://127.0.0.1:$PROXY_PORT"
-/Users/frank/.nvm/versions/node/v22.22.2/bin/node "$ROOT/backend/spendos-proxy.mjs" &
+# Start proxy backend
+echo "[SpendOS] Starting proxy → http://127.0.0.1:$PROXY_PORT"
+node "$ROOT/backend/spendos-proxy.mjs" &
 PROXY_PID=$!
 
-# x402 API server başlat
-echo "[SpendOS] x402 API başlatılıyor → http://127.0.0.1:$X402_PORT"
-/Users/frank/.nvm/versions/node/v22.22.2/bin/node "$ROOT/backend/x402-api-server.mjs" &
+# Start x402 API server
+echo "[SpendOS] Starting x402 API → http://127.0.0.1:$X402_PORT"
+node "$ROOT/backend/x402-api-server.mjs" &
 X402_PID=$!
 
-# Frontend başlat
-echo "[SpendOS] Frontend başlatılıyor → http://127.0.0.1:$FRONTEND_PORT"
+# Start frontend
+echo "[SpendOS] Starting frontend → http://127.0.0.1:$FRONTEND_PORT"
 python3 -m http.server $FRONTEND_PORT --directory "$ROOT" --bind 127.0.0.1 &
 FRONTEND_PID=$!
 
-# Servisler ayağa kalksın
+# Let services come up
 sleep 1
 
-# Vault durumunu göster (vault adresi varsa)
+# Show vault status (if vault address is set)
 if [ -n "$SPENDOS_VAULT_ADDRESS" ] && [ "$SPENDOS_VAULT_ADDRESS" != "" ]; then
   echo "[SpendOS] Vault: $SPENDOS_VAULT_ADDRESS"
 else
-  echo "[SpendOS] Vault: henüz deploy edilmedi — demo modu aktif"
+  echo "[SpendOS] Vault: not yet deployed — demo mode active"
 fi
 
 echo ""
@@ -67,7 +67,7 @@ echo "│  SpendOS                                            │"
 echo "│  Frontend  →  http://127.0.0.1:$FRONTEND_PORT             │"
 echo "│  Proxy API →  http://127.0.0.1:$PROXY_PORT             │"
 echo "│  x402 API  →  http://127.0.0.1:$X402_PORT             │"
-echo "│  Ctrl+C ile durdur                                  │"
+echo "│  Press Ctrl+C to stop                               │"
 echo "└─────────────────────────────────────────────────────┘"
 echo ""
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * SpendOS x402 API Server
- * Gerçek ücretli API endpoint'leri simüle eder.
- * Ödeme gelmezse HTTP 402 döner, ödeme doğrulandıktan sonra veri verir.
+ * Simulates real paid API endpoints.
+ * Returns HTTP 402 if no payment header; returns data after payment is verified.
  * Port: 4192
  */
 

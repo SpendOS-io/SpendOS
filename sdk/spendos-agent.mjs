@@ -125,15 +125,15 @@ export class SpendOS {
   }
 
   /**
-   * Otomatik x402 ödeme döngüsü:
-   * 1. url'e istek at
-   * 2. 402 gelirse SpendOS'tan ödeme al + settle et
-   * 3. X-Payment header ile tekrar dene
+   * Automatic x402 payment cycle:
+   * 1. Request url
+   * 2. If 402, get payment from SpendOS + settle
+   * 3. Retry with X-Payment header
    */
   async fetch402(url, { method = "GET", body = null, task = "", recipient = "" } = {}) {
     const headers = body ? { "Content-Type": "application/json" } : {};
 
-    // İlk istek
+    // Initial request
     const first = await this.fetch(url, {
       method,
       headers,
@@ -144,7 +144,7 @@ export class SpendOS {
       return first.json().catch(() => null);
     }
 
-    // 402 — ödeme gereksinimleri
+    // 402 — payment requirements
     const req402 = await first.json();
     const x402 = req402.x402;
     if (!x402) throw new SpendOSError("invalid_402_response", { status: 402, payload: req402 });
@@ -152,7 +152,7 @@ export class SpendOS {
     const domain = x402.domain || new URL(url).hostname;
     const contract = x402.contract || "";
 
-    // Proxy'de ödeme oluştur
+    // Create payment via proxy
     const paid = await this.payX402({
       domain,
       contract,
@@ -166,7 +166,7 @@ export class SpendOS {
       throw new SpendOSError("payment_rejected", { status: 402, payload: paid });
     }
 
-    // On-chain settle et
+    // On-chain settle
     const settled = await this.submitSettlement({
       domain,
       contract,
@@ -180,7 +180,7 @@ export class SpendOS {
     const receiptId = settled.receipt?.id || paid.receipt?.id;
     if (!receiptId) throw new SpendOSError("settlement_failed", { payload: settled });
 
-    // Ödeme onaylandı — X-Payment header ile tekrar dene
+    // Payment confirmed — retry with X-Payment header
     const retryHeaders = { ...headers, "X-Payment": `spendos:${receiptId}` };
     const retryRes = await this.fetch(url, {
       method,
