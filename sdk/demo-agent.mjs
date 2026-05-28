@@ -30,7 +30,7 @@ async function run() {
   console.log(`  API   : ${API}`);
   console.log(`  Agent : ${AGENT}\n`);
 
-  // 1. Proxy sağlık kontrolü
+  // 1. Proxy health check
   const health = await spendos.health();
   log("1. Proxy Health", { status: health.status, time: health.time });
 
