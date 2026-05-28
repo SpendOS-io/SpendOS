@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="SpendOS is autonomous financial enforcement infrastructure for AI agent spending on Base."
+    />
+    <title>SpendOS | Autonomous Financial Enforcement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/jpeg" href="./assets/spendos-glyph.jpeg" />
+    <link rel="stylesheet" href="./styles.css?v=19" />
+  </head>
+  <body>
+    <!-- ── LAUNCH SCREEN ─────────────────────────────────────────── -->
+    <section class="launch-screen" id="launchScreen" aria-label="SpendOS launch screen">
+      <header class="launch-nav">
+        <a class="brand" href="#" aria-label="SpendOS home">
+          <span class="brand-mark">
+            <img src="./assets/spendos-glyph.jpeg" alt="" />
+          </span>
+          <span>
+            <span class="brand-name">SpendOS</span>
+            <span class="brand-subtitle">Autonomous financial enforcement</span>
+          </span>
+        </a>
+        <div class="nav-end">
+          <a class="social-link" href="#" aria-label="SpendOS on X" data-placeholder="x-url">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.259 5.622 5.905-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
+            </svg>
+          </a>
+          <a class="social-link" href="#" aria-label="SpendOS on GitHub" data-placeholder="github-url">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2Z"/>
+            </svg>
+          </a>
+          <button class="plain-action" id="navLaunchApp">Launch App</button>
+        </div>
+      </header>
+
+      <div class="launch-grid">
+        <section class="launch-copy">
+          <p class="eyebrow">Base / USDC / x402</p>
+          <h1>Autonomous financial enforcement.</h1>
+          <p>
+            Give AI agents controlled USDC budgets, policy limits, payment receipts,
+            and real-time risk enforcement before they touch live capital.
+          </p>
+          <div class="launch-actions">
+            <button class="launch-primary" id="launchApp">Launch App</button>
+            <a class="launch-secondary" href="#risk" id="openRisk">Inspect Risk Layer</a>
+            <a class="launch-secondary" href="./docs.html">Docs</a>
+          </div>
+        </section>
+
+        <section class="launch-instrument" aria-label="SpendOS operational preview">
+          <div class="instrument-mark">
+            <img src="./assets/spendos-glyph.jpeg" alt="" />
+          </div>
+          <div class="instrument-lines">
+            <div><span>Agent</span><strong>research-agent</strong></div>
+            <div><span>Network</span><strong>Base</strong></div>
+            <div><span>Asset</span><strong>USDC</strong></div>
+            <div><span>Mode</span><strong>Simulate</strong></div>
+          </div>
+          <div class="launch-scan" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </section>
+      </div>
+
+      <footer class="launch-footer">
+        <div><span>SpendOS proxy</span><strong>x402 payment control</strong></div>
+        <div><span>Policy engine</span><strong>limits / allowlists / approvals</strong></div>
+        <div><span>Audit ledger</span><strong>receipts attached</strong></div>
+      </footer>
+    </section>
+
+    <!-- ── APP SHELL ─────────────────────────────────────────────── -->
+    <div class="shell app-shell" id="appShell">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <!-- Brand -->
+        <a class="brand topbar-brand" href="#" aria-label="SpendOS home">
+          <span class="brand-mark">
+            <img src="./assets/spendos-glyph.jpeg" alt="" />
+          </span>
+          <span>
+            <span class="brand-name">SpendOS</span>
+            <span class="brand-subtitle">Autonomous enforcement</span>
+          </span>
+        </a>
+
+        <!-- Tabs nav (all 8 tabs live here) -->
+        <nav class="tabs" aria-label="SpendOS operational pages">
+          <button class="tab is-active" data-tab="activity">Activity</button>
+          <button class="tab" data-tab="simulation">Simulation</button>
+          <button class="tab" data-tab="policies">Policies</button>
+          <button class="tab" data-tab="receipts">Receipts</button>
+          <button class="tab tab-secondary" data-tab="vault">Vault</button>
+          <button class="tab tab-secondary" data-tab="x402">x402</button>
+          <button class="tab tab-secondary" data-tab="mcp">MCP</button>
+          <button class="tab tab-secondary" data-tab="risk">Risk</button>
+        </nav>
+
+        <!-- Top actions -->
+        <div class="top-actions">
+          <div class="mode-switch" aria-label="Enforcement mode">
+            <button class="mode-option" data-mode="monitor">Monitor</button>
+            <button class="mode-option is-active" data-mode="simulate">Simulate</button>
+            <button class="mode-option" data-mode="enforce">Enforce</button>
+          </div>
+          <span class="network-pill" id="networkPill">Base / USDC</span>
+          <div class="wallet-actions">
+            <button class="plain-action" id="connectWallet">Connect</button>
+            <button class="plain-action wallet-secondary" id="disconnectWallet" hidden>Disconnect</button>
+          </div>
+          <button class="plain-action" id="openDossier">Agent File</button>
+          <button class="plain-action" id="copyState">Copy State</button>
+        </div>
+      </header>
+
+      <!-- APP LAYOUT: sidebar + main -->
+      <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" aria-label="Agent Control">
+
+          <!-- Agent selector block -->
+          <div class="sidebar-block">
+            <label class="field-label" for="agentSelect">Agent</label>
+            <select id="agentSelect" class="field">
+              <option value="research-agent">research-agent</option>
+              <option value="market-sentinel">market-sentinel</option>
+              <option value="contract-decoder">contract-decoder</option>
+            </select>
+          </div>
+
+          <!-- Balance strip -->
+          <section class="balance-strip" aria-label="Wallet balance">
+            <div>
+              <span class="meta-label">Wallet</span>
+              <strong id="walletBalance">42.80 USDC</strong>
+            </div>
+            <div>
+              <span class="meta-label">Today</span>
+              <strong id="spentToday">0.42 USDC</strong>
+            </div>
+          </section>
+
+          <!-- Vault quick section -->
+          <div class="sidebar-block vault-control">
+            <div class="section-head">
+              <span class="meta-label">Vault</span>
+              <span class="mono" id="vaultStatus">Deployed</span>
+            </div>
+            <p class="vault-address" id="vaultAddressShort">0x7c91...4A2e</p>
+            <button class="inline-action vault-action" id="deployVault">Rotate Vault Key</button>
+          </div>
+
+          <!-- Pause button -->
+          <button class="danger-action sidebar-pause" id="pauseAgent">Pause Agent</button>
+
+          <!-- Policy Settings collapsible -->
+          <details class="policy-settings">
+            <summary class="policy-settings-trigger">
+              <span>Policy Settings</span>
+              <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </summary>
+            <div class="policy-settings-body">
+
+              <!-- Budget range -->
+              <div class="control-block">
+                <div class="range-head">
+                  <label class="field-label" for="budgetRange">USDC budget</label>
+                  <output id="budgetValue">25.00</output>
+                </div>
+                <input id="budgetRange" class="range" type="range" min="5" max="100" value="25" />
+              </div>
+
+              <!-- Daily / tx limits -->
+              <div class="control-grid">
+                <label>
+                  <span class="field-label">Daily limit</span>
+                  <input id="dailyLimit" class="field" type="number" min="1" step="1" value="10" />
+                </label>
+                <label>
+                  <span class="field-label">Per tx</span>
+                  <input id="txLimit" class="field" type="number" min="0.01" step="0.01" value="0.25" />
+                </label>
+              </div>
+
+              <!-- Domain allowlist -->
+              <div class="control-block">
+                <p class="field-label">Domain allowlists</p>
+                <div class="policy-input-row">
+                  <input id="domainInput" class="field policy-input" type="text" placeholder="api.service.com" />
+                  <button class="inline-action" id="addDomain">Add</button>
+                </div>
+                <div class="tag-list editable-list" id="domainList"></div>
+              </div>
+
+              <!-- Contract allowlist -->
+              <div class="control-block">
+                <p class="field-label">Contract allowlists</p>
+                <div class="policy-input-row">
+                  <input id="contractInput" class="field policy-input" type="text" placeholder="0x..." />
+                  <button class="inline-action" id="addContract">Add</button>
+                </div>
+                <div class="address-list editable-list" id="contractList"></div>
+              </div>
+
+              <!-- x402 permissions -->
+              <div class="control-block">
+                <p class="field-label">x402 permissions</p>
+                <div class="permission-grid">
+                  <label><input type="checkbox" checked /> Market data</label>
+                  <label><input type="checkbox" checked /> Wallet risk</label>
+                  <label><input type="checkbox" checked /> Contract decode</label>
+                  <label><input type="checkbox" /> Trading</label>
+                </div>
+              </div>
+
+            </div>
+          </details>
+
+          <!-- Terminal activity log (pushed to bottom via flex) -->
+          <section class="terminal sidebar-terminal" aria-label="Terminal activity log">
+            <div class="terminal-head">
+              <span>Telemetry</span>
+              <span id="modeReadout">SIMULATE</span>
+            </div>
+            <div id="activityLog" class="terminal-lines"></div>
+          </section>
+
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+          <!-- Agent hero -->
+          <section class="agent-hero">
+            <canvas id="radarCanvas" class="radar-canvas" aria-hidden="true"></canvas>
+            <div class="identity">
+              <div class="identity-glyph" aria-hidden="true">
+                <img src="./assets/spendos-glyph.jpeg" alt="" />
+              </div>
+              <div>
+                <p class="eyebrow">Operational Surface</p>
+                <h2 id="activeAgentName">research-agent</h2>
+                <p class="subcopy">Autonomous financial enforcement active on Base.</p>
+              </div>
+            </div>
+            <div class="state-block">
+              <span class="meta-label">Current spend state</span>
+              <strong id="spendState">2 approved / 1 blocked</strong>
+            </div>
+          </section>
+
+          <!-- View page (rendered by app.js) -->
+          <div id="viewPage" class="view-page operation-grid" aria-live="polite"></div>
+
+        </main>
+      </div>
+    </div>
+
+    <!-- ── DOSSIER DRAWER ─────────────────────────────────────────── -->
+    <div id="dossierOverlay" class="dossier-overlay" role="dialog" aria-label="Agent File" aria-modal="true">
+      <div id="dossierBackdrop" class="dossier-backdrop"></div>
+      <div class="dossier-panel">
+
+        <!-- Panel header -->
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Dossier</p>
+            <h2>Agent File</h2>
+          </div>
+          <button class="plain-action" id="closeDossier" aria-label="Close dossier">&#x2715;</button>
+        </div>
+
+        <!-- File table -->
+        <section class="file-table">
+          <div><span>Network</span><strong>Base</strong></div>
+          <div><span>Asset</span><strong>USDC</strong></div>
+          <div><span>Vault address</span><strong id="vaultAddressFull">0x7c91...4A2e</strong></div>
+          <div><span>Owner</span><strong id="ownerAddress">Not connected</strong></div>
+          <div><span>Last auth</span><strong id="lastTxHash">0x7aa4...e201</strong></div>
+          <div><span>Daily limit</span><strong id="fileDailyLimit">10.00 USDC</strong></div>
+          <div><span>Risk mode</span><strong id="riskMode">Adaptive</strong></div>
+          <div><span>Spend authority</span><strong>Policy-bound</strong></div>
+          <div><span>Risk score</span><strong id="riskScore">18 / 100</strong></div>
+        </section>
+
+        <!-- Memo block -->
+        <section class="memo-block">
+          <span class="meta-label">One-line memo</span>
+          <p id="memoText">Research agent may buy data, never custody strategy.</p>
+        </section>
+
+        <!-- Action stack -->
+        <section class="action-stack">
+          <button id="savePolicy">Save Policy</button>
+          <button id="exportReceipts">Export Receipts</button>
+          <button id="exportPolicy">Export Policy JSON</button>
+          <button id="resetLocalState">Reset Local State</button>
+          <button id="pauseAgentRight" class="danger-secondary">Pause Agent</button>
+        </section>
+
+        <!-- Library panel -->
+        <section class="library" id="libraryPanel">
+          <div class="section-head">
+            <span class="meta-label">Library</span>
+            <span class="mono">LOCAL / 12</span>
+          </div>
+          <div class="library-group">
+            <h3>Saved agents</h3>
+            <button class="library-row is-selected">
+              <span>research-agent</span>
+              <small>Base / USDC / active</small>
+            </button>
+            <button class="library-row">
+              <span>market-sentinel</span>
+              <small>Base / USDC / monitor</small>
+            </button>
+          </div>
+          <div class="library-group">
+            <h3>Recent receipts</h3>
+            <button class="library-row">
+              <span>0.18 USDC</span>
+              <small>tokensight / approved</small>
+            </button>
+            <button class="library-row">
+              <span>0.24 USDC</span>
+              <small>baseintel / approved</small>
+            </button>
+          </div>
+          <div class="library-group">
+            <h3>Blocked payments</h3>
+            <button class="library-row">
+              <span>0.90 USDC</span>
+              <small>unknown domain / denied</small>
+            </button>
+          </div>
+          <div class="library-group">
+            <h3>Policy templates</h3>
+            <button class="library-row">
+              <span>Research Only</span>
+              <small>no trading / no custody</small>
+            </button>
+            <button class="library-row">
+              <span>Strict x402</span>
+              <small>allowlisted APIs only</small>
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ── TOAST ─────────────────────────────────────────────────── -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./config.local.js"></script>
+    <script src="./app.js?v=19"></script>
+    <script>
+      // Dossier open / close wiring
+      document.getElementById('openDossier').addEventListener('click', function() {
+        document.getElementById('dossierOverlay').classList.add('is-open');
+      });
+      document.getElementById('closeDossier').addEventListener('click', function() {
+        document.getElementById('dossierOverlay').classList.remove('is-open');
+      });
+      document.getElementById('dossierBackdrop').addEventListener('click', function() {
+        document.getElementById('dossierOverlay').classList.remove('is-open');
+      });
+    </script>
+  </body>
+</html>

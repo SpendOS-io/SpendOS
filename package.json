@@ -1,0 +1,40 @@
+{
+  "name": "spendos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bash start.sh",
+    "proxy": "node backend/spendos-proxy.mjs",
+    "mcp": "node mcp/spendos-mcp-server.mjs",
+    "x402:api": "node backend/x402-api-server.mjs",
+    "demo:agent": "node sdk/demo-agent.mjs",
+    "wallet:new": "node scripts/gen-testnet-wallet.mjs",
+    "wallet:setup": "node scripts/gen-testnet-wallet.mjs --write-env",
+    "wallet:watch": "node scripts/watch-balance.mjs",
+    "wallet:check": "node scripts/watch-balance.mjs --once",
+    "compile:contracts": "node scripts/compile-contracts.mjs",
+    "deploy:vault": "node scripts/deploy-spendos-vault.mjs",
+    "deploy:vault:mock": "node scripts/deploy-spendos-vault.mjs --network base-sepolia --mock-usdc",
+    "deploy:vault:dry": "node scripts/deploy-spendos-vault.mjs --dry-run",
+    "setup:vault": "node scripts/post-deploy-setup.mjs",
+    "setup:vault:mock": "node scripts/post-deploy-setup.mjs --mock-usdc",
+    "setup:vault:dry": "node scripts/post-deploy-setup.mjs --dry-run",
+    "export:env": "node scripts/export-runtime-env.mjs",
+    "vault:admin": "node scripts/vault-admin.mjs",
+    "vault:status": "node scripts/vault-admin.mjs status",
+    "vault:authorize": "node scripts/vault-admin.mjs authorize-policy",
+    "vault:fund": "node scripts/vault-admin.mjs fund",
+    "vault:set-operator": "node scripts/vault-admin.mjs set-operator",
+    "test:proxy": "SPENDOS_STATE_FILE=memory node --test test-backend/*.test.mjs",
+    "test:sdk": "SPENDOS_STATE_FILE=memory node --test test-sdk/*.test.mjs",
+    "test:mcp": "node --test test-mcp/*.test.mjs",
+    "test:scripts": "node --test test-scripts/*.test.mjs",
+    "test": "npm run test:proxy && npm run test:sdk && npm run test:mcp && npm run test:scripts",
+    "check": "node --check app.js && node --check backend/spendos-proxy.mjs && node --check backend/x402-api-server.mjs && node --check sdk/spendos-agent.mjs && node --check sdk/demo-agent.mjs && node --check mcp/spendos-mcp-server.mjs && node --check scripts/compile-contracts.mjs && node --check scripts/deploy-spendos-vault.mjs && node --check scripts/vault-admin.mjs && node --check scripts/export-runtime-env.mjs && node --check scripts/post-deploy-setup.mjs && node --check scripts/watch-balance.mjs && node --check scripts/gen-testnet-wallet.mjs"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0",
+    "solc": "^0.8.35"
+  }
+}

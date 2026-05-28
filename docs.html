@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="SpendOS documentation — spending controls for autonomous AI agents on Base." />
+    <title>SpendOS Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" type="image/jpeg" href="./assets/spendos-glyph.jpeg" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #000000;
+        --surface: #0b0f0c;
+        --surface-2: #060806;
+        --line: #26342d;
+        --line-soft: #17211c;
+        --text: #f2efe7;
+        --muted: #8b948c;
+        --muted-2: #59635b;
+        --accent: #a9c7a9;
+        --accent-2: #6e876e;
+        --warning: #b99b63;
+        --danger: #b46b66;
+        --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        --sans: "Geist", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        scroll-behavior: smooth;
+      }
+
+      body { min-height: 100vh; }
+
+      ::selection { background: rgba(169,199,169,0.2); color: var(--text); }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #020302; }
+      ::-webkit-scrollbar-thumb { background: #223029; border-radius: 3px; }
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { color: var(--text); }
+
+      /* ── TOP NAV ── */
+      .topbar {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 56px;
+        background: rgba(0,0,0,0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line-soft);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 32px;
+        z-index: 100;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+        text-decoration: none;
+        flex-shrink: 0;
+      }
+
+      .brand-mark {
+        width: 28px; height: 28px;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+
+      .brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+      .brand-name { font-size: 15px; font-weight: 600; line-height: 1; }
+
+      .topbar-links {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-left: auto;
+      }
+
+      .topbar-links a {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+        transition: color 0.15s;
+      }
+
+      .topbar-links a:hover, .topbar-links a.is-active { color: var(--text); }
+
+      .topbar-cta {
+        background: var(--accent);
+        color: #0d1a10;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        text-decoration: none;
+      }
+
+      .topbar-cta:hover { opacity: 0.85; color: #0d1a10; }
+
+      /* ── LAYOUT ── */
+      .docs-layout {
+        display: flex;
+        padding-top: 56px;
+        min-height: 100vh;
+      }
+
+      /* ── SIDEBAR ── */
+      .sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        left: 0;
+        overflow-y: auto;
+        border-right: 1px solid var(--line-soft);
+        padding: 32px 0 48px;
+      }
+
+      .sidebar-group { margin-bottom: 28px; }
+
+      .sidebar-group-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted-2);
+        padding: 0 20px;
+        margin-bottom: 8px;
+      }
+
+      .sidebar-link {
+        display: block;
+        padding: 6px 20px;
+        font-size: 13px;
+        color: var(--muted);
+        transition: color 0.12s, background 0.12s;
+        border-left: 2px solid transparent;
+      }
+
+      .sidebar-link:hover {
+        color: var(--text);
+        background: var(--line-soft);
+      }
+
+      .sidebar-link.is-active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: rgba(169,199,169,0.05);
+      }
+
+      /* ── MAIN CONTENT ── */
+      .docs-main {
+        margin-left: 240px;
+        flex: 1;
+        max-width: 760px;
+        padding: 56px 48px 96px;
+      }
+
+      /* ── SECTIONS ── */
+      .doc-section {
+        padding-top: 48px;
+        margin-top: 0;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .doc-section:first-child { border-top: none; padding-top: 0; }
+
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--accent-2);
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.15;
+        color: var(--text);
+        margin-bottom: 16px;
+      }
+
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 14px;
+        margin-top: 40px;
+      }
+
+      h2:first-child { margin-top: 0; }
+
+      h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 10px;
+        margin-top: 28px;
+      }
+
+      p {
+        line-height: 1.7;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+
+      p strong { color: var(--text); font-weight: 600; }
+
+      ul, ol {
+        padding-left: 20px;
+        margin-bottom: 16px;
+      }
+
+      li {
+        line-height: 1.7;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      li strong { color: var(--text); }
+
+      /* ── FLOW STEPS ── */
+      .flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 24px 0;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .flow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line-soft);
+        background: var(--surface);
+      }
+
+      .flow-step:last-child { border-bottom: none; }
+
+      .flow-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--line);
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .flow-content { flex: 1; }
+      .flow-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+      .flow-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+      /* ── CODE BLOCKS ── */
+      pre {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px 20px;
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        line-height: 1.6;
+      }
+
+      p code, li code {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-size: 12px;
+        color: var(--accent);
+      }
+
+      /* ── API TABLE ── */
+      .api-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 13px;
+      }
+
+      .api-table th {
+        text-align: left;
+        padding: 8px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted-2);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .api-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line-soft);
+        vertical-align: top;
+      }
+
+      .api-table tr:last-child td { border-bottom: none; }
+
+      .api-table td:first-child {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--warning);
+        white-space: nowrap;
+      }
+
+      .api-table td:nth-child(2) {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--accent);
+      }
+
+      .api-table td:nth-child(3) { color: var(--muted); }
+
+      /* ── TOOL GRID ── */
+      .tool-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .tool-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px 16px;
+      }
+
+      .tool-name {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--accent);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .tool-desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      /* ── INFO CARDS ── */
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 20px 0;
+      }
+
+      .info-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px 18px;
+      }
+
+      .info-card-label {
+        font-size: 11px;
+        color: var(--muted-2);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .info-card-value {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text);
+        word-break: break-all;
+      }
+
+      /* ── NOTICE ── */
+      .notice {
+        background: rgba(169,199,169,0.06);
+        border: 1px solid rgba(169,199,169,0.2);
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 20px 0;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .notice strong { color: var(--accent); }
+
+      /* ── BADGE ── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--line-soft);
+        border: 1px solid var(--line);
+        border-radius: 100px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 16px;
+      }
+
+      .badge-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      /* ── MOBILE ── */
+      @media (max-width: 768px) {
+        .sidebar { display: none; }
+        .docs-main { margin-left: 0; padding: 32px 20px 64px; }
+        .info-grid, .tool-grid { grid-template-columns: 1fr; }
+        h1 { font-size: 26px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- TOP NAV -->
+    <nav class="topbar">
+      <a class="brand" href="./index.html">
+        <span class="brand-mark">
+          <img src="./assets/spendos-glyph.jpeg" alt="" />
+        </span>
+        <span class="brand-name">SpendOS</span>
+      </a>
+      <div class="topbar-links">
+        <a href="#overview" class="is-active">Docs</a>
+        <a href="./index.html">App</a>
+        <a class="topbar-cta" href="./index.html">Launch App</a>
+      </div>
+    </nav>
+
+    <div class="docs-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">Getting Started</p>
+          <a href="#overview" class="sidebar-link is-active">Overview</a>
+          <a href="#how-it-works" class="sidebar-link">How It Works</a>
+          <a href="#quickstart" class="sidebar-link">Quickstart</a>
+        </div>
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">Protocol</p>
+          <a href="#x402" class="sidebar-link">x402 Payment Flow</a>
+          <a href="#policy" class="sidebar-link">Policy Engine</a>
+          <a href="#vault" class="sidebar-link">SpendOSVault</a>
+        </div>
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">Integration</p>
+          <a href="#sdk" class="sidebar-link">Agent SDK</a>
+          <a href="#mcp" class="sidebar-link">MCP Server</a>
+          <a href="#api" class="sidebar-link">Proxy API</a>
+        </div>
+        <div class="sidebar-group">
+          <p class="sidebar-group-label">Reference</p>
+          <a href="#contracts" class="sidebar-link">Contract Addresses</a>
+          <a href="#env" class="sidebar-link">Environment Variables</a>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="docs-main">
+
+        <!-- OVERVIEW -->
+        <section class="doc-section" id="overview">
+          <p class="eyebrow">SpendOS</p>
+          <h1>Spending controls for autonomous AI agents</h1>
+          <div class="badge"><span class="badge-dot"></span>Base Mainnet — Live</div>
+          <p>
+            SpendOS is autonomous financial enforcement infrastructure for AI agents on Base.
+            Owners define a <strong>spend policy</strong> — daily limits, per-transaction caps, domain allowlists, and risk mode.
+            Agents spend within those rules. Every payment is enforced on-chain by the <strong>SpendOSVault</strong> smart contract.
+          </p>
+          <p>
+            No agent can exceed its policy. No payment settles without matching the owner-signed policy digest stored on-chain.
+            When a rule is violated, the payment is blocked — not just logged.
+          </p>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <p class="info-card-label">Chain</p>
+              <p class="info-card-value">Base (8453)</p>
+            </div>
+            <div class="info-card">
+              <p class="info-card-label">Asset</p>
+              <p class="info-card-value">USDC</p>
+            </div>
+            <div class="info-card">
+              <p class="info-card-label">Protocol</p>
+              <p class="info-card-value">x402 (HTTP 402)</p>
+            </div>
+            <div class="info-card">
+              <p class="info-card-label">Agent Interface</p>
+              <p class="info-card-value">SDK + MCP (16 tools)</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <section class="doc-section" id="how-it-works">
+          <h2>How It Works</h2>
+          <p>
+            SpendOS sits between an autonomous agent and the APIs it wants to pay for.
+            Every payment request flows through three layers: <strong>policy check</strong>, <strong>on-chain enforcement</strong>, and <strong>receipt logging</strong>.
+          </p>
+
+          <div class="flow">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div class="flow-content">
+                <p class="flow-title">Owner sets policy</p>
+                <p class="flow-desc">Daily limit, per-transaction cap, allowed domains, allowed contracts, risk mode. Policy digest is signed and stored on-chain via SpendOSVault.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div class="flow-content">
+                <p class="flow-title">Agent calls a paid API</p>
+                <p class="flow-desc">The API endpoint returns <code>HTTP 402 Payment Required</code> with payment requirements — amount, domain, contract address.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div class="flow-content">
+                <p class="flow-title">SpendOS checks policy</p>
+                <p class="flow-desc">Proxy evaluates the request: Is the domain allowlisted? Is the amount within limits? Is the agent paused? Risk score updated.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">4</div>
+              <div class="flow-content">
+                <p class="flow-title">On-chain settlement</p>
+                <p class="flow-desc">SpendOSVault verifies operator authorization, checks daily limit, checks per-transaction limit, and transfers USDC to the recipient.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">5</div>
+              <div class="flow-content">
+                <p class="flow-title">Receipt issued</p>
+                <p class="flow-desc">A <code>ReceiptRecorded</code> event is emitted on-chain. The proxy returns a receipt ID. Agent retries the original request with <code>X-Payment: spendos:{receiptId}</code>.</p>
+              </div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-num">6</div>
+              <div class="flow-content">
+                <p class="flow-title">API responds</p>
+                <p class="flow-desc">The API verifies the receipt and returns the data. The spend is logged in the audit ledger.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- QUICKSTART -->
+        <section class="doc-section" id="quickstart">
+          <h2>Quickstart</h2>
+
+          <h3>1. Install</h3>
+          <pre><code>npm install</code></pre>
+
+          <h3>2. Configure</h3>
+          <p>Create <code>.env.local</code> in the project root:</p>
+          <pre><code>SPENDOS_DEPLOY_NETWORK=base
+CHAIN_ID=8453
+BASE_RPC_URL=https://mainnet.base.org
+PRIVATE_KEY=0x...
+SPENDOS_VAULT_ADDRESS=0x...
+USDC_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+SPENDOS_REQUIRE_AUTH=true
+SPENDOS_API_KEYS=spos_live_...</code></pre>
+
+          <p>Create <code>config.local.js</code> for the frontend (gitignored):</p>
+          <pre><code>window.SPENDOS_CONFIG = {
+  apiKey: "spos_live_...",
+  proxyUrl: "http://127.0.0.1:4191",
+  vaultContract: "0x...",
+  network: "base",
+  chainId: 8453,
+};</code></pre>
+
+          <h3>3. Start</h3>
+          <pre><code>npm start</code></pre>
+          <p>Starts three services:</p>
+          <ul>
+            <li>Frontend UI → <code>http://127.0.0.1:4180</code></li>
+            <li>Proxy API → <code>http://127.0.0.1:4191</code></li>
+            <li>x402 demo API → <code>http://127.0.0.1:4192</code></li>
+          </ul>
+
+          <h3>4. Run the demo agent</h3>
+          <pre><code>npm run demo:agent</code></pre>
+          <p>The demo agent calls three paid endpoints via x402, paying real USDC on Base mainnet for each one. Each run costs ~0.23 USDC and produces three on-chain transactions.</p>
+
+          <h3>Check launch readiness</h3>
+          <pre><code>curl "http://127.0.0.1:4191/v1/launch/readiness?agentId=research-agent"</code></pre>
+          <pre><code>{
+  "status": "ready",
+  "score": { "passed": 7, "total": 7 }
+}</code></pre>
+        </section>
+
+        <!-- X402 -->
+        <section class="doc-section" id="x402">
+          <h2>x402 Payment Flow</h2>
+          <p>
+            SpendOS implements the <strong>x402 protocol</strong> — a standard for HTTP-native API payments.
+            When an agent hits a paid endpoint, the server returns <code>402 Payment Required</code> with payment requirements.
+            The agent pays through SpendOS and retries with a receipt header.
+          </p>
+
+          <h3>402 Response</h3>
+          <pre><code>HTTP/1.1 402 Payment Required
+Content-Type: application/json
+
+{
+  "error": "payment_required",
+  "payment": {
+    "domain": "api.tokensight.io",
+    "contract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "amount": 0.05,
+    "currency": "USDC",
+    "network": "base"
+  }
+}</code></pre>
+
+          <h3>Auto-payment with the SDK</h3>
+          <pre><code>const result = await spendos.fetch402("http://api.tokensight.io/v1/token-price", {
+  task: "Get ETH price for portfolio rebalancing",
+});
+
+// result.data     — the API response
+// result._payment — receipt id, tx hash, amount spent</code></pre>
+
+          <h3>Manual payment flow</h3>
+          <pre><code>// 1. Check policy
+const check = await spendos.checkPolicy({
+  domain: "api.tokensight.io",
+  contract: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  amount: 0.05,
+  task: "Token price lookup",
+});
+
+// 2. Pay
+const payment = await spendos.payX402({
+  domain: "api.tokensight.io",
+  contract: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  amount: 0.05,
+  task: "Token price lookup",
+  idempotencyKey: "price-lookup-001",
+});
+
+// 3. Retry original request with receipt
+fetch("http://api.tokensight.io/v1/token-price", {
+  headers: { "X-Payment": `spendos:${payment.receiptId}` }
+});</code></pre>
+        </section>
+
+        <!-- POLICY -->
+        <section class="doc-section" id="policy">
+          <h2>Policy Engine</h2>
+          <p>
+            Every agent has a <strong>policy file</strong> — a JSON document defining its spend authority.
+            The SHA-256 digest of this policy is signed by the owner and stored on-chain.
+            The proxy enforces the policy off-chain; the vault enforces limits on-chain.
+          </p>
+
+          <h3>Policy fields</h3>
+          <pre><code>{
+  "agentId": "research-agent",
+  "dailyLimit": 10,
+  "perTransactionLimit": 0.25,
+  "domains": [
+    "api.tokensight.io",
+    "risk.baseintel.net",
+    "decode.calldata.run"
+  ],
+  "contracts": [
+    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "0x4200000000000000000000000000000000000006"
+  ],
+  "riskMode": "adaptive",
+  "paused": false
+}</code></pre>
+
+          <h3>Risk modes</h3>
+          <ul>
+            <li><strong>monitor</strong> — Log all spend, never block.</li>
+            <li><strong>adaptive</strong> — Block high-risk payments, approve normal ones.</li>
+            <li><strong>strict</strong> — Block anything outside explicit allowlists.</li>
+            <li><strong>enforce</strong> — Every payment requires owner approval.</li>
+          </ul>
+
+          <h3>Approval queue</h3>
+          <p>
+            When a payment is blocked by policy (domain not allowlisted, amount over limit, high risk score),
+            it enters the <strong>approval queue</strong>. The owner can approve or deny via the UI or the <code>resolve_approval</code> MCP tool.
+          </p>
+        </section>
+
+        <!-- VAULT -->
+        <section class="doc-section" id="vault">
+          <h2>SpendOSVault Contract</h2>
+          <p>
+            SpendOSVault is a minimal, dependency-free Solidity contract deployed on Base.
+            It enforces all spend rules on-chain — no off-chain enforcement can be bypassed.
+          </p>
+
+          <h3>What it enforces</h3>
+          <ul>
+            <li><strong>Per-transaction USDC limit</strong> — rejects any single payment above the cap</li>
+            <li><strong>Rolling 24-hour daily limit</strong> — tracks spend in a sliding window</li>
+            <li><strong>Owner-signed policy digest</strong> — payment calldata must match the stored digest</li>
+            <li><strong>Operator delegation</strong> — only the authorized operator signer can call <code>spendUSDC</code></li>
+            <li><strong>Pause state</strong> — owner can suspend an agent instantly</li>
+            <li><strong>ReceiptRecorded event</strong> — every approved payment emits a verifiable on-chain receipt</li>
+          </ul>
+
+          <h3>Key functions</h3>
+          <pre><code>// Register an agent vault
+function registerAgent(address agentVault) external
+
+// Fund agent with USDC
+function fundAgent(address agentVault, uint256 amount) external
+
+// Authorize a new spend policy
+function authorizePolicy(
+  address agentVault,
+  bytes32 policyDigest,
+  uint256 dailyLimit,
+  uint256 perTxLimit,
+  bytes calldata signature
+) external
+
+// Set operator (proxy signer)
+function setOperator(address operator) external
+
+// Execute a payment (operator only)
+function spendUSDC(
+  address agentVault,
+  address recipient,
+  uint256 amount,
+  bytes32 receiptHash,
+  bytes32 policyDigest
+) external
+
+// Emergency pause
+function pauseAgent(address agentVault) external
+function resumeAgent(address agentVault) external</code></pre>
+
+          <div class="notice">
+            <strong>Base Mainnet:</strong> <code>0xC3C474a7917eCFDE5A25B64A58a190f901F9241A</code><br/>
+            Contract source is in <code>contracts/SpendOSVault.sol</code> — no external dependencies, no upgradability proxy.
+          </div>
+        </section>
+
+        <!-- SDK -->
+        <section class="doc-section" id="sdk">
+          <h2>Agent SDK</h2>
+          <p>
+            A lightweight ESM client for the SpendOS proxy. Use it in custom agents, backend workers, MCP servers, or any Node.js environment.
+          </p>
+
+          <h3>Install</h3>
+          <pre><code>import { SpendOS } from "./sdk/spendos-agent.mjs";
+
+const spendos = new SpendOS({
+  baseUrl: "http://127.0.0.1:4191",
+  agent: "research-agent",
+  apiKey: "spos_live_...",
+});</code></pre>
+
+          <h3>Budget flow</h3>
+          <pre><code>// Reserve budget before a multi-step task
+await spendos.requestBudget({
+  task: "Analyze 10 wallets for risk scoring",
+  maxSpend: 1.00,
+  idempotencyKey: "wallet-scan-2025-001",
+});
+
+// Check individual payments
+const decision = await spendos.checkPolicy({
+  domain: "risk.baseintel.net",
+  contract: "0x4200000000000000000000000000000000000006",
+  amount: 0.10,
+  task: "Wallet risk score",
+});
+
+if (decision.status === "approved") {
+  await spendos.payX402({ ... });
+}</code></pre>
+
+          <h3>All methods</h3>
+          <ul>
+            <li><code>fetch402(url, options)</code> — auto x402 pay and retry</li>
+            <li><code>requestBudget(payload)</code> — reserve bounded budget</li>
+            <li><code>checkPolicy(payload)</code> — evaluate before paying</li>
+            <li><code>payX402(payload)</code> — authorize and record payment</li>
+            <li><code>updatePolicy(payload)</code> — update limits, allowlists, risk mode</li>
+            <li><code>previewSettlement(payload)</code> — build calldata without spending</li>
+            <li><code>preflightSettlement(payload)</code> — on-chain read-only check</li>
+            <li><code>submitSettlement(payload)</code> — submit on-chain transaction</li>
+            <li><code>getSettlementConfig()</code> — vault readiness and operator status</li>
+            <li><code>getVaultStatus(options)</code> — on-chain vault state</li>
+            <li><code>getLaunchReadiness(options)</code> — 7-point launch check</li>
+            <li><code>getReceipts(options)</code> — spend history</li>
+            <li><code>getApprovals(options)</code> — pending or resolved approvals</li>
+            <li><code>resolveApproval(payload)</code> — approve or deny a request</li>
+            <li><code>pauseAgent(options)</code> — suspend spend authority</li>
+            <li><code>resumeAgent(options)</code> — restore spend authority</li>
+          </ul>
+
+          <h3>Idempotency</h3>
+          <p>
+            Pass <code>idempotencyKey</code> on payment and budget calls when the agent might retry.
+            SpendOS replays the original response instead of spending twice.
+          </p>
+        </section>
+
+        <!-- MCP -->
+        <section class="doc-section" id="mcp">
+          <h2>MCP Server</h2>
+          <p>
+            SpendOS exposes <strong>16 tools</strong> via the Model Context Protocol.
+            Connect Claude Desktop, Codex, or any MCP-compatible client to give AI models direct access to spend controls.
+          </p>
+
+          <h3>Config (Claude Desktop)</h3>
+          <pre><code>{
+  "mcpServers": {
+    "spendos": {
+      "command": "node",
+      "args": ["/path/to/spendos/mcp/spendos-mcp-server.mjs"],
+      "env": {
+        "SPENDOS_PROXY_URL": "http://127.0.0.1:4191",
+        "SPENDOS_AGENT": "research-agent",
+        "SPENDOS_API_KEYS": "spos_live_..."
+      }
+    }
+  }
+}</code></pre>
+
+          <h3>Available tools</h3>
+          <div class="tool-grid">
+            <div class="tool-card">
+              <p class="tool-name">get_agent_file</p>
+              <p class="tool-desc">Policy, vault metadata, daily limits, policy digest.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">request_budget</p>
+              <p class="tool-desc">Reserve bounded USDC budget for a task.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">check_policy</p>
+              <p class="tool-desc">Evaluate a payment before authorizing.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">update_policy</p>
+              <p class="tool-desc">Update limits, allowlists, risk mode, pause state.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">pay_x402</p>
+              <p class="tool-desc">Authorize an x402 API payment on-chain.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">preview_settlement</p>
+              <p class="tool-desc">Build settlement calldata without spending.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">preflight_settlement</p>
+              <p class="tool-desc">Read-only on-chain preflight before submitting.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">get_settlement_config</p>
+              <p class="tool-desc">Vault readiness, operator status, function selector.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">get_vault_status</p>
+              <p class="tool-desc">On-chain policy, balance, paused state.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">get_launch_readiness</p>
+              <p class="tool-desc">Aggregated 7-point launch check.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">submit_settlement</p>
+              <p class="tool-desc">Submit vault settlement transaction.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">get_receipts</p>
+              <p class="tool-desc">Spend history for audit and accounting.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">get_approvals</p>
+              <p class="tool-desc">Pending or resolved approval requests.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">resolve_approval</p>
+              <p class="tool-desc">Approve or deny a pending spend request.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">pause_agent</p>
+              <p class="tool-desc">Suspend spend authority immediately.</p>
+            </div>
+            <div class="tool-card">
+              <p class="tool-name">resume_agent</p>
+              <p class="tool-desc">Restore spend authority after review.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- API -->
+        <section class="doc-section" id="api">
+          <h2>Proxy API</h2>
+          <p>
+            All requests require <code>X-SpendOS-Key: spos_live_...</code> except public paths
+            (<code>/health</code>, <code>/v1/ops/readiness</code>, <code>/v1/settlement/config</code>).
+          </p>
+
+          <table class="api-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>GET</td><td>/health</td><td>Health check</td></tr>
+              <tr><td>GET</td><td>/v1/agents/:id</td><td>Agent policy and vault metadata</td></tr>
+              <tr><td>POST</td><td>/v1/request_budget</td><td>Reserve bounded USDC budget</td></tr>
+              <tr><td>POST</td><td>/v1/check_policy</td><td>Evaluate payment before authorizing</td></tr>
+              <tr><td>POST</td><td>/v1/pay_x402</td><td>Authorize and record payment</td></tr>
+              <tr><td>POST</td><td>/v1/update_policy</td><td>Update limits, allowlists, risk mode</td></tr>
+              <tr><td>POST</td><td>/v1/settlement/preview</td><td>Build settlement calldata (read-only)</td></tr>
+              <tr><td>POST</td><td>/v1/settlement/preflight</td><td>On-chain preflight check</td></tr>
+              <tr><td>POST</td><td>/v1/settlement/submit</td><td>Submit on-chain settlement transaction</td></tr>
+              <tr><td>GET</td><td>/v1/settlement/config</td><td>Vault readiness and operator status</td></tr>
+              <tr><td>GET</td><td>/v1/vault/status</td><td>On-chain vault state for an agent</td></tr>
+              <tr><td>GET</td><td>/v1/launch/readiness</td><td>Aggregated 7-point launch check</td></tr>
+              <tr><td>GET</td><td>/v1/receipts</td><td>Spend history for audit</td></tr>
+              <tr><td>GET</td><td>/v1/receipts/:id</td><td>Single receipt verification</td></tr>
+              <tr><td>GET</td><td>/v1/approvals</td><td>Pending or resolved approvals</td></tr>
+              <tr><td>POST</td><td>/v1/approvals/:id/resolve</td><td>Approve or deny a request</td></tr>
+              <tr><td>POST</td><td>/v1/pause_agent</td><td>Suspend agent spend authority</td></tr>
+              <tr><td>POST</td><td>/v1/resume_agent</td><td>Restore agent spend authority</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Example: check policy</h3>
+          <pre><code>curl -X POST http://127.0.0.1:4191/v1/check_policy \
+  -H "Content-Type: application/json" \
+  -H "X-SpendOS-Key: spos_live_..." \
+  -d '{
+    "agentId": "research-agent",
+    "domain": "api.tokensight.io",
+    "contract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "amount": 0.05,
+    "task": "Token price lookup"
+  }'</code></pre>
+          <pre><code>{
+  "status": "approved",
+  "reason": "within_policy",
+  "riskScore": 12,
+  "dailyRemaining": 9.77
+}</code></pre>
+        </section>
+
+        <!-- CONTRACTS -->
+        <section class="doc-section" id="contracts">
+          <h2>Contract Addresses</h2>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <p class="info-card-label">SpendOSVault — Base Mainnet</p>
+              <p class="info-card-value">0xC3C474a7917eCFDE5A25B64A58a190f901F9241A</p>
+            </div>
+            <div class="info-card">
+              <p class="info-card-label">USDC — Base Mainnet</p>
+              <p class="info-card-value">0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</p>
+            </div>
+            <div class="info-card">
+              <p class="info-card-label">WETH — Base Mainnet</p>
+              <p class="info-card-value">0x4200000000000000000000000000000000000006</p>
+            </div>
+            <div class="info-card">
+              <p class="info-card-label">Chain ID</p>
+              <p class="info-card-value">8453</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ENV -->
+        <section class="doc-section" id="env">
+          <h2>Environment Variables</h2>
+
+          <table class="api-table">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="2" style="color:var(--muted-2);font-size:11px;padding:12px 12px 4px;text-transform:uppercase;letter-spacing:.07em;">Network</td></tr>
+              <tr><td>BASE_RPC_URL</td><td>Base mainnet RPC URL</td></tr>
+              <tr><td>CHAIN_ID</td><td>Chain ID (8453 for mainnet)</td></tr>
+              <tr><td>PRIVATE_KEY</td><td>Owner/deployer private key</td></tr>
+              <tr><td colspan="2" style="color:var(--muted-2);font-size:11px;padding:12px 12px 4px;text-transform:uppercase;letter-spacing:.07em;">Vault</td></tr>
+              <tr><td>SPENDOS_VAULT_ADDRESS</td><td>Deployed SpendOSVault address</td></tr>
+              <tr><td>USDC_ADDRESS</td><td>USDC contract address</td></tr>
+              <tr><td>SPENDOS_OPERATOR_ADDRESS</td><td>Operator signer address</td></tr>
+              <tr><td>SPENDOS_AGENT_VAULT</td><td>Agent vault wallet address</td></tr>
+              <tr><td colspan="2" style="color:var(--muted-2);font-size:11px;padding:12px 12px 4px;text-transform:uppercase;letter-spacing:.07em;">Policy</td></tr>
+              <tr><td>SPENDOS_DOMAINS</td><td>Comma-separated allowed domains</td></tr>
+              <tr><td>SPENDOS_CONTRACTS</td><td>Comma-separated allowed contract addresses</td></tr>
+              <tr><td>SPENDOS_POLICY_DIGEST</td><td>Active policy digest (SHA-256)</td></tr>
+              <tr><td colspan="2" style="color:var(--muted-2);font-size:11px;padding:12px 12px 4px;text-transform:uppercase;letter-spacing:.07em;">Auth</td></tr>
+              <tr><td>SPENDOS_REQUIRE_AUTH</td><td>Enable API key auth (true/false)</td></tr>
+              <tr><td>SPENDOS_API_KEYS</td><td>Comma-separated valid API keys</td></tr>
+              <tr><td>SPENDOS_ALLOWED_ORIGINS</td><td>Comma-separated CORS origins</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+      </main>
+    </div>
+
+    <script>
+      // Active sidebar link on scroll
+      const sections = document.querySelectorAll(".doc-section[id]");
+      const links = document.querySelectorAll(".sidebar-link");
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              links.forEach((l) => l.classList.remove("is-active"));
+              const active = document.querySelector(`.sidebar-link[href="#${entry.target.id}"]`);
+              if (active) active.classList.add("is-active");
+            }
+          });
+        },
+        { rootMargin: "-30% 0px -60% 0px" }
+      );
+
+      sections.forEach((s) => observer.observe(s));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+config.local.js
+deployments/
+data/spendos-state.json
+data/spendos-audit.ndjson
+*.tmp
+.DS_Store

@@ -1,0 +1,1229 @@
+{
+  "contractName": "SpendOSVault",
+  "sourceName": "contracts/SpendOSVault.sol",
+  "compiler": {
+    "name": "solc-js",
+    "version": "0.8.35+commit.47b9dedd.Emscripten.clang"
+  },
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "usdcAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "AgentPausedError",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "DailyLimitExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InsufficientAgentBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidAmount",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidSignature",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NotAgentOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NotAuthorizedOperator",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PerTransactionLimitExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TransferFailed",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "AgentFunded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "paused",
+          "type": "bool"
+        }
+      ],
+      "name": "AgentPaused",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        }
+      ],
+      "name": "AgentRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "AgentWithdrawn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "name": "OperatorSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "policyDigest",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "dailyLimit",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "perTransactionLimit",
+          "type": "uint256"
+        }
+      ],
+      "name": "PolicyAuthorized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "service",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "receiptHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "policyDigest",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ReceiptRecorded",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "dailyLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "perTransactionLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "policyDigest",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "ownerSignature",
+          "type": "bytes"
+        }
+      ],
+      "name": "authorizePolicy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "fundAgent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "operators",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        }
+      ],
+      "name": "policies",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "availableBalance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "dailyLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "perTransactionLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "spentInWindow",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint64",
+          "name": "windowStart",
+          "type": "uint64"
+        },
+        {
+          "internalType": "bool",
+          "name": "paused",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "policyDigest",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "dailyLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "perTransactionLimit",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "policyDigest",
+          "type": "bytes32"
+        }
+      ],
+      "name": "policyMessageHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "messageHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "recoverSigner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        }
+      ],
+      "name": "registerAgent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "name": "setOperator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "paused",
+          "type": "bool"
+        }
+      ],
+      "name": "setPaused",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "service",
+          "type": "string"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "receiptHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "spendUSDC",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "messageHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "toEthSignedMessageHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "usdc",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentVault",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawAgent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60a060405234801561000f575f5ffd5b5060405161136a38038061136a83398101604081905261002e91610066565b6001600160a01b0381166100555760405163e6c4247b60e01b815260040160405180910390fd5b6001600160a01b0316608052610093565b5f60208284031215610076575f5ffd5b81516001600160a01b038116811461008c575f5ffd5b9392505050565b6080516112a36100c75f395f8181610208015281816103180152818161091b01528181610a9e0152610d0201526112a35ff3fe608060405234801561000f575f5ffd5b50600436106100cb575f3560e01c806389eba0d2116100885780639a2ba2f8116100635780639a2ba2f81461028e578063bedd3c07146102a1578063e3bd96cc146102b4578063e79d5d2a146102c7575f5ffd5b806389eba0d214610255578063918a15cf1461026857806397aba7f91461027b575f5ffd5b8063135bd932146100cf57806320e98698146100f55780632637588e146101b1578063306b9bb9146101ee5780633e413bee14610203578063558a729714610242575b5f5ffd5b6100e26100dd366004610efc565b6102da565b6040519081526020015b60405180910390f35b610160610103366004610f32565b5f6020819052908152604090208054600182015460028301546003840154600485015460058601546006909601546001600160a01b0390951695939492939192909167ffffffffffffffff811691600160401b90910460ff169088565b604080516001600160a01b0390991689526020890197909752958701949094526060860192909252608085015267ffffffffffffffff1660a0840152151560c083015260e0820152610100016100ec565b6101de6101bf366004610f4b565b600160209081525f928352604080842090915290825290205460ff1681565b60405190151581526020016100ec565b6102016101fc366004610f32565b610383565b005b61022a7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100ec565b610201610250366004610f89565b61044f565b610201610263366004610f89565b6104e1565b6100e2610276366004610fbe565b61055d565b61022a61028936600461101a565b6105af565b61020161029c366004611062565b6106d9565b6102016102af3660046110ce565b6108b4565b6102016102c23660046110f6565b6109e7565b6102016102d536600461112f565b610b6b565b6040516e29b832b73227a9902837b634b1bc9d60891b60208201526bffffffffffffffffffffffff1930606090811b8216602f8401524660438401527f0000000000000000000000000000000000000000000000000000000000000000811b8216606384015286901b166077820152608b810184905260ab810183905260cb81018290525f9060eb01604051602081830303815290604052805190602001209050949350505050565b6001600160a01b0381166103aa5760405163e6c4247b60e01b815260040160405180910390fd5b6001600160a01b038082165f9081526020819052604090208054909116156103e557604051630e41dcbf60e21b815260040160405180910390fd5b8054336001600160a01b03199091168117825560058201805467ffffffffffffffff19164267ffffffffffffffff161790556040516001600160a01b03841691907ff9d00cf58ec82af69e3a10e900f60959d5fd25f219f6adcd25fd4bb4cbd5f63e905f90a35050565b6001600160a01b0382166104765760405163e6c4247b60e01b815260040160405180910390fd5b335f8181526001602090815260408083206001600160a01b03871680855290835292819020805460ff191686151590811790915590519081529192917fceb576d9f15e4e200fdb5096d64d5dfd667e16def20c1eefd14256d8e3faa267910160405180910390a35050565b5f6104ec8333610de8565b600581018054841515600160401b0268ff0000000000000000199091161790556040519091506001600160a01b0384169033907fbd684fd75afbe0bf570696daae42dc835ff72208502e6279ab86417d803a97c59061055090861515815260200190565b60405180910390a3505050565b6040517f19457468657265756d205369676e6564204d6573736167653a0a3332000000006020820152603c81018290525f90605c01604051602081830303815290604052805190602001209050919050565b5f604182146105d157604051638baa579f60e01b815260040160405180910390fd5b8235602084013560408501355f1a601b8110156105f6576105f3601b826111b5565b90505b8060ff16601b1415801561060e57508060ff16601c14155b1561062c57604051638baa579f60e01b815260040160405180910390fd5b7f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a082111561066d57604051638baa579f60e01b815260040160405180910390fd5b60016106788861055d565b604080515f8152602081018083529290925260ff841690820152606081018590526080810184905260a0016020604051602081039080840390855afa1580156106c3573d5f5f3e3d5ffd5b5050604051601f19015198975050505050505050565b6001600160a01b0386166107005760405163e6c4247b60e01b815260040160405180910390fd5b84158061070b575083155b156107295760405163162908e360e11b815260040160405180910390fd5b8484111561074a5760405163088f523360e41b815260040160405180910390fd5b5f610757878787876102da565b90505f6107658285856105af565b90506001600160a01b03811661078e57604051638baa579f60e01b815260040160405180910390fd5b6001600160a01b038089165f908152602081905260409020805490911661081c5780546001600160a01b0319166001600160a01b03838116918217835560058301805467ffffffffffffffff19164267ffffffffffffffff16179055604051908b1691907ff9d00cf58ec82af69e3a10e900f60959d5fd25f219f6adcd25fd4bb4cbd5f63e905f90a3610849565b80546001600160a01b0383811691161461084957604051630e41dcbf60e21b815260040160405180910390fd5b600281018890556003810187905560068101869055604080518981526020810189905287916001600160a01b038c811692908616917fe612b8ddc8f8411134035e3b780a12f83813368b4b103e84aa9d542e1fdc06c5910160405180910390a4505050505050505050565b805f036108d45760405163162908e360e11b815260040160405180910390fd5b5f6108df8333610de8565b905081816001015f8282546108f491906111ce565b90915550506040516323b872dd60e01b8152336004820152306024820152604481018390527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906323b872dd906064016020604051808303815f875af1158015610969573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061098d91906111e1565b6109aa576040516312171d8360e31b815260040160405180910390fd5b6040518281526001600160a01b0384169033907f49af616656db0fca31912fe65a529a84c3634718357324a7397674794e6caf2f90602001610550565b815f03610a075760405163162908e360e11b815260040160405180910390fd5b6001600160a01b038116610a2e5760405163e6c4247b60e01b815260040160405180910390fd5b5f610a398433610de8565b90508281600101541015610a605760405163aac63ff960e01b815260040160405180910390fd5b82816001015f828254610a7391906111fc565b909155505060405163a9059cbb60e01b81526001600160a01b038381166004830152602482018590527f0000000000000000000000000000000000000000000000000000000000000000169063a9059cbb906044016020604051808303815f875af1158015610ae4573d5f5f3e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610b0891906111e1565b610b25576040516312171d8360e31b815260040160405180910390fd5b6040518381526001600160a01b0385169033907f98bd758a3ebd56b946ec85c04e3c91903909fc69c3ebca407f9210a472fcd0d19060200160405180910390a350505050565b6001600160a01b038516610b925760405163e6c4247b60e01b815260040160405180910390fd5b835f03610bb25760405163162908e360e11b815260040160405180910390fd5b6001600160a01b038087165f90815260208190526040902080549091610bd9911633610e2d565b610bf657604051630f66b7c760e21b815260040160405180910390fd5b6005810154600160401b900460ff1615610c235760405163b366c47f60e01b815260040160405180910390fd5b8060030154851115610c485760405163088f523360e41b815260040160405180910390fd5b8481600101541015610c6d5760405163aac63ff960e01b815260040160405180910390fd5b610c7681610e8c565b8060020154858260040154610c8b91906111ce565b1115610caa57604051630652f4c560e21b815260040160405180910390fd5b84816004015f828254610cbd91906111ce565b9250508190555084816001015f828254610cd791906111fc565b909155505060405163a9059cbb60e01b81526001600160a01b038781166004830152602482018790527f0000000000000000000000000000000000000000000000000000000000000000169063a9059cbb906044016020604051808303815f875af1158015610d48573d5f5f3e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610d6c91906111e1565b610d89576040516312171d8360e31b815260040160405180910390fd5b81866001600160a01b0316886001600160a01b03167f144221ea9a42c9fbfca9600985f7f60962ead0322be82c0e815d9252876ec48987878a8760060154604051610dd7949392919061120f565b60405180910390a450505050505050565b6001600160a01b038281165f90815260208190526040902080549091838116911614610e2757604051630e41dcbf60e21b815260040160405180910390fd5b92915050565b5f6001600160a01b03831615801590610e855750826001600160a01b0316826001600160a01b03161480610e8557506001600160a01b038084165f9081526001602090815260408083209386168352929052205460ff165b9392505050565b6005810154610ea89067ffffffffffffffff166201518061124d565b67ffffffffffffffff164210610ede5760058101805467ffffffffffffffff19164267ffffffffffffffff161790555f60048201555b50565b80356001600160a01b0381168114610ef7575f5ffd5b919050565b5f5f5f5f60808587031215610f0f575f5ffd5b610f1885610ee1565b966020860135965060408601359560600135945092505050565b5f60208284031215610f42575f5ffd5b610e8582610ee1565b5f5f60408385031215610f5c575f5ffd5b610f6583610ee1565b9150610f7360208401610ee1565b90509250929050565b8015158114610ede575f5ffd5b5f5f60408385031215610f9a575f5ffd5b610fa383610ee1565b91506020830135610fb381610f7c565b809150509250929050565b5f60208284031215610fce575f5ffd5b5035919050565b5f5f83601f840112610fe5575f5ffd5b50813567ffffffffffffffff811115610ffc575f5ffd5b602083019150836020828501011115611013575f5ffd5b9250929050565b5f5f5f6040848603121561102c575f5ffd5b83359250602084013567ffffffffffffffff811115611049575f5ffd5b61105586828701610fd5565b9497909650939450505050565b5f5f5f5f5f5f60a08789031215611077575f5ffd5b61108087610ee1565b9550602087013594506040870135935060608701359250608087013567ffffffffffffffff8111156110b0575f5ffd5b6110bc89828a01610fd5565b979a9699509497509295939492505050565b5f5f604083850312156110df575f5ffd5b6110e883610ee1565b946020939093013593505050565b5f5f5f60608486031215611108575f5ffd5b61111184610ee1565b92506020840135915061112660408501610ee1565b90509250925092565b5f5f5f5f5f5f60a08789031215611144575f5ffd5b61114d87610ee1565b955061115b60208801610ee1565b945060408701359350606087013567ffffffffffffffff81111561117d575f5ffd5b61118989828a01610fd5565b979a9699509497949695608090950135949350505050565b634e487b7160e01b5f52601160045260245ffd5b60ff8181168382160190811115610e2757610e276111a1565b80820180821115610e2757610e276111a1565b5f602082840312156111f1575f5ffd5b8151610e8581610f7c565b81810381811115610e2757610e276111a1565b60608152836060820152838560808301375f608085830101525f6080601f19601f870116830101905083602083015282604083015295945050505050565b67ffffffffffffffff8181168382160190811115610e2757610e276111a156fea2646970667358221220ac9a852c6a576d39d0322021aa12bf3e9248a2a9c5ab46f8a9e9f9b6cd909ed764736f6c63430008230033",
+  "deployedBytecode": "0x608060405234801561000f575f5ffd5b50600436106100cb575f3560e01c806389eba0d2116100885780639a2ba2f8116100635780639a2ba2f81461028e578063bedd3c07146102a1578063e3bd96cc146102b4578063e79d5d2a146102c7575f5ffd5b806389eba0d214610255578063918a15cf1461026857806397aba7f91461027b575f5ffd5b8063135bd932146100cf57806320e98698146100f55780632637588e146101b1578063306b9bb9146101ee5780633e413bee14610203578063558a729714610242575b5f5ffd5b6100e26100dd366004610efc565b6102da565b6040519081526020015b60405180910390f35b610160610103366004610f32565b5f6020819052908152604090208054600182015460028301546003840154600485015460058601546006909601546001600160a01b0390951695939492939192909167ffffffffffffffff811691600160401b90910460ff169088565b604080516001600160a01b0390991689526020890197909752958701949094526060860192909252608085015267ffffffffffffffff1660a0840152151560c083015260e0820152610100016100ec565b6101de6101bf366004610f4b565b600160209081525f928352604080842090915290825290205460ff1681565b60405190151581526020016100ec565b6102016101fc366004610f32565b610383565b005b61022a7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020016100ec565b610201610250366004610f89565b61044f565b610201610263366004610f89565b6104e1565b6100e2610276366004610fbe565b61055d565b61022a61028936600461101a565b6105af565b61020161029c366004611062565b6106d9565b6102016102af3660046110ce565b6108b4565b6102016102c23660046110f6565b6109e7565b6102016102d536600461112f565b610b6b565b6040516e29b832b73227a9902837b634b1bc9d60891b60208201526bffffffffffffffffffffffff1930606090811b8216602f8401524660438401527f0000000000000000000000000000000000000000000000000000000000000000811b8216606384015286901b166077820152608b810184905260ab810183905260cb81018290525f9060eb01604051602081830303815290604052805190602001209050949350505050565b6001600160a01b0381166103aa5760405163e6c4247b60e01b815260040160405180910390fd5b6001600160a01b038082165f9081526020819052604090208054909116156103e557604051630e41dcbf60e21b815260040160405180910390fd5b8054336001600160a01b03199091168117825560058201805467ffffffffffffffff19164267ffffffffffffffff161790556040516001600160a01b03841691907ff9d00cf58ec82af69e3a10e900f60959d5fd25f219f6adcd25fd4bb4cbd5f63e905f90a35050565b6001600160a01b0382166104765760405163e6c4247b60e01b815260040160405180910390fd5b335f8181526001602090815260408083206001600160a01b03871680855290835292819020805460ff191686151590811790915590519081529192917fceb576d9f15e4e200fdb5096d64d5dfd667e16def20c1eefd14256d8e3faa267910160405180910390a35050565b5f6104ec8333610de8565b600581018054841515600160401b0268ff0000000000000000199091161790556040519091506001600160a01b0384169033907fbd684fd75afbe0bf570696daae42dc835ff72208502e6279ab86417d803a97c59061055090861515815260200190565b60405180910390a3505050565b6040517f19457468657265756d205369676e6564204d6573736167653a0a3332000000006020820152603c81018290525f90605c01604051602081830303815290604052805190602001209050919050565b5f604182146105d157604051638baa579f60e01b815260040160405180910390fd5b8235602084013560408501355f1a601b8110156105f6576105f3601b826111b5565b90505b8060ff16601b1415801561060e57508060ff16601c14155b1561062c57604051638baa579f60e01b815260040160405180910390fd5b7f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a082111561066d57604051638baa579f60e01b815260040160405180910390fd5b60016106788861055d565b604080515f8152602081018083529290925260ff841690820152606081018590526080810184905260a0016020604051602081039080840390855afa1580156106c3573d5f5f3e3d5ffd5b5050604051601f19015198975050505050505050565b6001600160a01b0386166107005760405163e6c4247b60e01b815260040160405180910390fd5b84158061070b575083155b156107295760405163162908e360e11b815260040160405180910390fd5b8484111561074a5760405163088f523360e41b815260040160405180910390fd5b5f610757878787876102da565b90505f6107658285856105af565b90506001600160a01b03811661078e57604051638baa579f60e01b815260040160405180910390fd5b6001600160a01b038089165f908152602081905260409020805490911661081c5780546001600160a01b0319166001600160a01b03838116918217835560058301805467ffffffffffffffff19164267ffffffffffffffff16179055604051908b1691907ff9d00cf58ec82af69e3a10e900f60959d5fd25f219f6adcd25fd4bb4cbd5f63e905f90a3610849565b80546001600160a01b0383811691161461084957604051630e41dcbf60e21b815260040160405180910390fd5b600281018890556003810187905560068101869055604080518981526020810189905287916001600160a01b038c811692908616917fe612b8ddc8f8411134035e3b780a12f83813368b4b103e84aa9d542e1fdc06c5910160405180910390a4505050505050505050565b805f036108d45760405163162908e360e11b815260040160405180910390fd5b5f6108df8333610de8565b905081816001015f8282546108f491906111ce565b90915550506040516323b872dd60e01b8152336004820152306024820152604481018390527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316906323b872dd906064016020604051808303815f875af1158015610969573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061098d91906111e1565b6109aa576040516312171d8360e31b815260040160405180910390fd5b6040518281526001600160a01b0384169033907f49af616656db0fca31912fe65a529a84c3634718357324a7397674794e6caf2f90602001610550565b815f03610a075760405163162908e360e11b815260040160405180910390fd5b6001600160a01b038116610a2e5760405163e6c4247b60e01b815260040160405180910390fd5b5f610a398433610de8565b90508281600101541015610a605760405163aac63ff960e01b815260040160405180910390fd5b82816001015f828254610a7391906111fc565b909155505060405163a9059cbb60e01b81526001600160a01b038381166004830152602482018590527f0000000000000000000000000000000000000000000000000000000000000000169063a9059cbb906044016020604051808303815f875af1158015610ae4573d5f5f3e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610b0891906111e1565b610b25576040516312171d8360e31b815260040160405180910390fd5b6040518381526001600160a01b0385169033907f98bd758a3ebd56b946ec85c04e3c91903909fc69c3ebca407f9210a472fcd0d19060200160405180910390a350505050565b6001600160a01b038516610b925760405163e6c4247b60e01b815260040160405180910390fd5b835f03610bb25760405163162908e360e11b815260040160405180910390fd5b6001600160a01b038087165f90815260208190526040902080549091610bd9911633610e2d565b610bf657604051630f66b7c760e21b815260040160405180910390fd5b6005810154600160401b900460ff1615610c235760405163b366c47f60e01b815260040160405180910390fd5b8060030154851115610c485760405163088f523360e41b815260040160405180910390fd5b8481600101541015610c6d5760405163aac63ff960e01b815260040160405180910390fd5b610c7681610e8c565b8060020154858260040154610c8b91906111ce565b1115610caa57604051630652f4c560e21b815260040160405180910390fd5b84816004015f828254610cbd91906111ce565b9250508190555084816001015f828254610cd791906111fc565b909155505060405163a9059cbb60e01b81526001600160a01b038781166004830152602482018790527f0000000000000000000000000000000000000000000000000000000000000000169063a9059cbb906044016020604051808303815f875af1158015610d48573d5f5f3e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610d6c91906111e1565b610d89576040516312171d8360e31b815260040160405180910390fd5b81866001600160a01b0316886001600160a01b03167f144221ea9a42c9fbfca9600985f7f60962ead0322be82c0e815d9252876ec48987878a8760060154604051610dd7949392919061120f565b60405180910390a450505050505050565b6001600160a01b038281165f90815260208190526040902080549091838116911614610e2757604051630e41dcbf60e21b815260040160405180910390fd5b92915050565b5f6001600160a01b03831615801590610e855750826001600160a01b0316826001600160a01b03161480610e8557506001600160a01b038084165f9081526001602090815260408083209386168352929052205460ff165b9392505050565b6005810154610ea89067ffffffffffffffff166201518061124d565b67ffffffffffffffff164210610ede5760058101805467ffffffffffffffff19164267ffffffffffffffff161790555f60048201555b50565b80356001600160a01b0381168114610ef7575f5ffd5b919050565b5f5f5f5f60808587031215610f0f575f5ffd5b610f1885610ee1565b966020860135965060408601359560600135945092505050565b5f60208284031215610f42575f5ffd5b610e8582610ee1565b5f5f60408385031215610f5c575f5ffd5b610f6583610ee1565b9150610f7360208401610ee1565b90509250929050565b8015158114610ede575f5ffd5b5f5f60408385031215610f9a575f5ffd5b610fa383610ee1565b91506020830135610fb381610f7c565b809150509250929050565b5f60208284031215610fce575f5ffd5b5035919050565b5f5f83601f840112610fe5575f5ffd5b50813567ffffffffffffffff811115610ffc575f5ffd5b602083019150836020828501011115611013575f5ffd5b9250929050565b5f5f5f6040848603121561102c575f5ffd5b83359250602084013567ffffffffffffffff811115611049575f5ffd5b61105586828701610fd5565b9497909650939450505050565b5f5f5f5f5f5f60a08789031215611077575f5ffd5b61108087610ee1565b9550602087013594506040870135935060608701359250608087013567ffffffffffffffff8111156110b0575f5ffd5b6110bc89828a01610fd5565b979a9699509497509295939492505050565b5f5f604083850312156110df575f5ffd5b6110e883610ee1565b946020939093013593505050565b5f5f5f60608486031215611108575f5ffd5b61111184610ee1565b92506020840135915061112660408501610ee1565b90509250925092565b5f5f5f5f5f5f60a08789031215611144575f5ffd5b61114d87610ee1565b955061115b60208801610ee1565b945060408701359350606087013567ffffffffffffffff81111561117d575f5ffd5b61118989828a01610fd5565b979a9699509497949695608090950135949350505050565b634e487b7160e01b5f52601160045260245ffd5b60ff8181168382160190811115610e2757610e276111a1565b80820180821115610e2757610e276111a1565b5f602082840312156111f1575f5ffd5b8151610e8581610f7c565b81810381811115610e2757610e276111a1565b60608152836060820152838560808301375f608085830101525f6080601f19601f870116830101905083602083015282604083015295945050505050565b67ffffffffffffffff8181168382160190811115610e2757610e276111a156fea2646970667358221220ac9a852c6a576d39d0322021aa12bf3e9248a2a9c5ab46f8a9e9f9b6cd909ed764736f6c63430008230033",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.35+commit.47b9dedd"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "usdcAddress",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "name": "AgentPausedError",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "DailyLimitExceeded",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InsufficientAgentBalance",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InvalidAddress",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InvalidAmount",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InvalidSignature",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotAgentOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotAuthorizedOperator",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "PerTransactionLimitExceeded",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "TransferFailed",
+          "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "AgentFunded",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            }
+          ],
+          "name": "AgentPaused",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            }
+          ],
+          "name": "AgentRegistered",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "AgentWithdrawn",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "allowed",
+              "type": "bool"
+            }
+          ],
+          "name": "OperatorSet",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "bytes32",
+              "name": "policyDigest",
+              "type": "bytes32"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "dailyLimit",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "perTransactionLimit",
+              "type": "uint256"
+            }
+          ],
+          "name": "PolicyAuthorized",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "service",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "internalType": "bytes32",
+              "name": "receiptHash",
+              "type": "bytes32"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "policyDigest",
+              "type": "bytes32"
+            }
+          ],
+          "name": "ReceiptRecorded",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dailyLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "perTransactionLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "policyDigest",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "ownerSignature",
+              "type": "bytes"
+            }
+          ],
+          "name": "authorizePolicy",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "fundAgent",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ],
+          "name": "operators",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "allowed",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            }
+          ],
+          "name": "policies",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "availableBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dailyLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "perTransactionLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "spentInWindow",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "windowStart",
+              "type": "uint64"
+            },
+            {
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "policyDigest",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dailyLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "perTransactionLimit",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "policyDigest",
+              "type": "bytes32"
+            }
+          ],
+          "name": "policyMessageHash",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "messageHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "name": "recoverSigner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            }
+          ],
+          "name": "registerAgent",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "allowed",
+              "type": "bool"
+            }
+          ],
+          "name": "setOperator",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            }
+          ],
+          "name": "setPaused",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "service",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "receiptHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "spendUSDC",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "messageHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "toEthSignedMessageHash",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "usdc",
+          "outputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "agentVault",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            }
+          ],
+          "name": "withdrawAgent",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      ],
+      "devdoc": {
+        "details": "This contract stores policy authority and receipt events. x402 routing and endpoint risk scoring stay offchain, then settle here when a payment is approved.",
+        "kind": "dev",
+        "methods": {},
+        "title": "SpendOSVault",
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "notice": "MVP Base USDC vault for policy-bound autonomous agent spending.",
+        "version": 1
+      }
+    },
+    "settings": {
+      "compilationTarget": {
+        "contracts/SpendOSVault.sol": "SpendOSVault"
+      },
+      "evmVersion": "osaka",
+      "libraries": {},
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "remappings": []
+    },
+    "sources": {
+      "contracts/SpendOSVault.sol": {
+        "keccak256": "0x48f62e1ab515952283a6afee7499e642efbcdb68db60b8c60f9c38be918fcb10",
+        "license": "MIT",
+        "urls": [
+          "bzz-raw://996c0eb7a36a649d0d4b36e0591e932378e8424ef1cdc7cb0c1519f1f1bbf6ca",
+          "dweb:/ipfs/QmVUSgAgueroLur4seE6aFYwiGaUqVfdDZPBritPaw4Rf6"
+        ]
+      }
+    },
+    "version": 1
+  }
+}
