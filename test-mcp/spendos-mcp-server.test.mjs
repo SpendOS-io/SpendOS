@@ -93,6 +93,31 @@ function fakeSpendos() {
     async resumeAgent({ agent }) {
       return { status: "active", agentId: agent || "research-agent" };
     },
+    async linkAcpWallet(payload) {
+      return {
+        status: "linked",
+        agentId: payload.agentId || "research-agent",
+        acpWallet: payload.acpWallet,
+        acpProviders: payload.acpProviders || [],
+      };
+    },
+    async checkAcpJob(payload) {
+      return {
+        status: "approved",
+        reason: "acp_job_within_policy",
+        provider: payload.provider,
+        guidance: { fundVia: "acp_topup" },
+      };
+    },
+    async acpTopup(payload) {
+      return {
+        status: "approved",
+        reason: "acp_topup_authorized",
+        acp: { action: "topup", wallet: "0x52908400098527886E0F7030069857D2E4169EE7" },
+        receipt: { domain: "acp-topup", amount: payload.amount },
+        settlement: { function: "spendUSDC" },
+      };
+    },
   };
 }
 
@@ -131,7 +156,59 @@ test("MCP tools/list exposes autonomous spend controls", async () => {
   assert.ok(names.includes("get_approvals"));
   assert.ok(names.includes("resolve_approval"));
   assert.ok(names.includes("pause_agent"));
+  assert.ok(names.includes("link_acp_wallet"));
+  assert.ok(names.includes("check_acp_job"));
+  assert.ok(names.includes("acp_topup"));
   assert.equal(TOOL_DEFINITIONS.find((tool) => tool.name === "pay_x402").annotations.destructiveHint, true);
+  assert.equal(TOOL_DEFINITIONS.find((tool) => tool.name === "acp_topup").annotations.destructiveHint, true);
+  assert.equal(TOOL_DEFINITIONS.find((tool) => tool.name === "check_acp_job").annotations.readOnlyHint, true);
+});
+
+test("MCP tools/call routes ACP tools through SpendOS SDK", async () => {
+  const linked = await handleJsonRpcMessage(
+    {
+      jsonrpc: "2.0",
+      id: 40,
+      method: "tools/call",
+      params: {
+        name: "link_acp_wallet",
+        arguments: { acpWallet: "0x52908400098527886E0F7030069857D2E4169EE7" },
+      },
+    },
+    { spendos: fakeSpendos() },
+  );
+  const jobCheck = await handleJsonRpcMessage(
+    {
+      jsonrpc: "2.0",
+      id: 41,
+      method: "tools/call",
+      params: {
+        name: "check_acp_job",
+        arguments: { provider: "0x8617E340B3D01FA5F11F306F4090FD50E238070D", amount: 0.2 },
+      },
+    },
+    { spendos: fakeSpendos() },
+  );
+  const topup = await handleJsonRpcMessage(
+    {
+      jsonrpc: "2.0",
+      id: 42,
+      method: "tools/call",
+      params: {
+        name: "acp_topup",
+        arguments: { amount: 0.2, task: "fund acp escrow" },
+      },
+    },
+    { spendos: fakeSpendos() },
+  );
+
+  assert.equal(linked.result.structuredContent.status, "linked");
+  assert.equal(linked.result.structuredContent.acpWallet, "0x52908400098527886E0F7030069857D2E4169EE7");
+  assert.equal(jobCheck.result.structuredContent.status, "approved");
+  assert.equal(jobCheck.result.structuredContent.guidance.fundVia, "acp_topup");
+  assert.equal(topup.result.structuredContent.status, "approved");
+  assert.equal(topup.result.structuredContent.receipt.domain, "acp-topup");
+  assert.equal(topup.result.structuredContent.settlement.function, "spendUSDC");
 });
 
 test("MCP tools/call routes pay_x402 through SpendOS SDK", async () => {

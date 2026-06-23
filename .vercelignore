@@ -1,0 +1,33 @@
+# Secrets and local overrides
+config.local.js
+.env
+.env.local
+.env.*.local
+
+# Backend — runs separately, not served as static files
+backend/
+mcp/
+sdk/
+scripts/
+script/
+
+# Tests
+test-backend/
+test-mcp/
+test-sdk/
+test-scripts/
+test/
+
+# Runtime state and artifacts
+data/
+artifacts/
+deployments/
+contracts/
+foundry.toml
+
+# Docs source / planning
+SPENDOS_UI_PLAN.md
+SPENDOS_UI_PLANI_TR.md
+
+# Node
+node_modules/

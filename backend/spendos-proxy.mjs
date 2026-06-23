@@ -74,6 +74,8 @@ const DEFAULT_AGENTS = {
     paused: false,
     domains: ["api.tokensight.io", "risk.baseintel.net", "decode.calldata.run", "deepindex.baseops.ai"],
     contracts: ["0x8335...2913", "0x4200...0006", "0x2f5a...bace"],
+    acpWallet: null,
+    acpProviders: [],
   },
   "market-sentinel": {
     vaultAddress: "0x41f0e96cBEe370F9E9A9D27348Aa3F6049BC9C01",
@@ -88,6 +90,8 @@ const DEFAULT_AGENTS = {
     paused: false,
     domains: ["depth.signalbase.com", "makerflow.net"],
     contracts: ["0x8335...2913", "0x4200...0006"],
+    acpWallet: null,
+    acpProviders: [],
   },
   "contract-decoder": {
     vaultAddress: "0x8E22B6d92C14C863992B81Bd48F029E19230D871",
@@ -102,6 +106,8 @@ const DEFAULT_AGENTS = {
     paused: false,
     domains: ["decode.calldata.run", "bytecode.tracebase.org"],
     contracts: ["0x2f5a...bace", "0x4200...0006"],
+    acpWallet: null,
+    acpProviders: [],
   },
 };
 
@@ -476,6 +482,8 @@ function policyDigest(agentId, agent) {
     domains: agent.domains,
     contracts: agent.contracts,
     paused: agent.paused,
+    acpWallet: agent.acpWallet || null,
+    acpProviders: agent.acpProviders || [],
   });
 }
 
@@ -769,6 +777,7 @@ function createApproval(agentId, request, decision, receipt) {
   const approval = {
     id: `approval_${randomUUID()}`,
     agentId,
+    kind: request.kind || "x402",
     receiptId: receipt.id,
     receiptHash: receipt.receiptHash,
     domain: request.domain,
@@ -864,12 +873,15 @@ function resolveApproval(approvalId, payload = {}) {
   if (agent.paused) {
     approval.status = "blocked";
     approval.reason = "agent_paused";
-  } else if (!agent.domains.includes(approval.domain)) {
+  } else if (approval.kind !== "acp_topup" && !agent.domains.includes(approval.domain)) {
     approval.status = "blocked";
     approval.reason = "domain_not_allowlisted";
-  } else if (!agent.contracts.includes(approval.contract)) {
+  } else if (approval.kind !== "acp_topup" && !agent.contracts.includes(approval.contract)) {
     approval.status = "blocked";
     approval.reason = "contract_not_allowlisted";
+  } else if (approval.kind === "acp_topup" && (!agent.acpWallet || !isAddress(agent.acpWallet))) {
+    approval.status = "blocked";
+    approval.reason = "acp_wallet_not_linked";
   } else if (agent.spentToday + approval.amount > agent.dailyLimit) {
     approval.status = "blocked";
     approval.reason = "daily_limit_exceeded";
@@ -1293,6 +1305,289 @@ function payX402(agentId, payload) {
   });
 }
 
+const ACP_TOPUP_SERVICE = "acp-topup";
+
+function normalizedAddressArray(value, field) {
+  const items = normalizedStringArray(value, field);
+  return items.map((item) => {
+    if (!isAddress(item)) {
+      const error = new Error(`invalid_${field}`);
+      error.status = 400;
+      throw error;
+    }
+    return getAddress(item);
+  });
+}
+
+function linkAcpWallet(agentId, payload) {
+  const agent = getAgent(agentId);
+  const wallet = String(payload.acpWallet || payload.wallet || "").trim();
+
+  if (!isAddress(wallet)) {
+    const error = new Error("invalid_acp_wallet");
+    error.status = 400;
+    throw error;
+  }
+
+  agent.acpWallet = getAddress(wallet);
+  if (Object.hasOwn(payload, "acpProviders")) {
+    agent.acpProviders = normalizedAddressArray(payload.acpProviders, "acp_providers");
+  }
+  persistState();
+
+  return {
+    status: "linked",
+    agentId,
+    acpWallet: agent.acpWallet,
+    acpProviders: agent.acpProviders || [],
+    policyDigest: policyDigest(agentId, agent),
+  };
+}
+
+function acpTopupRisk(agent, amount) {
+  let score = 8;
+  const reasons = [];
+
+  if (amount > agent.perTransactionLimit) {
+    score += 18;
+    reasons.push("above_per_transaction_limit");
+  }
+  if (agent.spentToday + amount > agent.dailyLimit) {
+    score += 22;
+    reasons.push("above_daily_limit");
+  }
+  if (amount > agent.dailyLimit / 2) {
+    score += 12;
+    reasons.push("large_share_of_daily_budget");
+  }
+
+  return {
+    score: Math.min(score, 99),
+    reasons: reasons.length ? reasons : ["policy_matched"],
+  };
+}
+
+function checkAcpTopup(agentId, request) {
+  const agent = getAgent(agentId);
+  const amount = Number(request.amount);
+
+  if (!amount || amount <= 0) {
+    return {
+      status: "blocked",
+      reason: "invalid_topup_request",
+      risk: { score: 99, reasons: ["missing_or_invalid_amount"] },
+    };
+  }
+  if (!agent.acpWallet || !isAddress(agent.acpWallet)) {
+    return {
+      status: "blocked",
+      reason: "acp_wallet_not_linked",
+      risk: { score: 99, reasons: ["acp_wallet_not_linked"] },
+    };
+  }
+  if (agent.paused) {
+    return {
+      status: "blocked",
+      reason: "agent_paused",
+      risk: { score: 99, reasons: ["agent_spend_authority_suspended"] },
+    };
+  }
+
+  const risk = acpTopupRisk(agent, amount);
+
+  if (amount > agent.perTransactionLimit) {
+    return { status: "pending", reason: "owner_approval_required", risk };
+  }
+  if (agent.spentToday + amount > agent.dailyLimit) {
+    return { status: "blocked", reason: "daily_limit_exceeded", risk };
+  }
+
+  return { status: "approved", reason: "acp_topup_within_policy", risk };
+}
+
+async function acpTopup(agentId, payload, { signer = null, vaultAddress = SPENDOS_VAULT_ADDRESS } = {}) {
+  const agent = getAgent(agentId);
+  const request = {
+    kind: "acp_topup",
+    domain: ACP_TOPUP_SERVICE,
+    contract: agent.acpWallet || "unlinked",
+    amount: payload.amount,
+    task: payload.task || "acp_wallet_topup",
+    recipient: agent.acpWallet || "",
+    idempotencyKey: payload.idempotencyKey || payload.requestId,
+  };
+  const idempotency = idempotencyRecord("acp_topup", agentId, request);
+  if (idempotency.replay) return idempotency.replay;
+  if (idempotency.conflict) return idempotency.conflict;
+
+  const decision = checkAcpTopup(agentId, request);
+  const acp = { action: "topup", wallet: agent.acpWallet || null };
+
+  if (decision.status !== "approved") {
+    const receipt = createReceipt(agentId, request, decision);
+    const approval = decision.status === "pending" ? createApproval(agentId, request, decision, receipt) : null;
+    return storeIdempotency(idempotency, {
+      status: decision.status,
+      reason: decision.reason,
+      risk: decision.risk,
+      acp,
+      receipt,
+      approval,
+    });
+  }
+
+  const submit = payload.submit === true;
+  const config = settlementConfigStatus(vaultAddress);
+  if (submit && !signer && (!config.vaultReady || !config.rpcReady || !config.signerReady)) {
+    return storeIdempotency(idempotency, {
+      status: "not_configured",
+      reason: config.vaultReady ? "operator_signer_not_configured" : "vault_address_not_configured",
+      risk: decision.risk,
+      acp,
+      config,
+      settlement: null,
+    });
+  }
+
+  const receipt = createReceipt(agentId, request, decision);
+  const settlement = settlementPayload(agentId, agent, request, receipt.receiptHash, { vaultAddress });
+
+  if (submit) {
+    const settlementSigner = signer || getSettlementSigner();
+    let tx;
+
+    try {
+      tx = await settlementSigner.sendTransaction({
+        to: settlement.transaction.to,
+        data: settlement.transaction.data,
+        value: 0,
+      });
+    } catch (error) {
+      const receiptIndex = receipts.findIndex((item) => item.id === receipt.id);
+      if (receiptIndex >= 0) receipts.splice(receiptIndex, 1);
+      throw error;
+    }
+
+    receipt.txHash = tx.hash;
+    receipt.status = "submitted";
+    receipt.reason = "acp_topup_submitted";
+    agent.spentToday = Number((agent.spentToday + Number(request.amount)).toFixed(6));
+    agent.balance = Number((agent.balance - Number(request.amount)).toFixed(6));
+
+    return storeIdempotency(idempotency, {
+      status: "submitted",
+      reason: "acp_topup_submitted",
+      txHash: tx.hash,
+      risk: decision.risk,
+      acp,
+      receipt,
+      settlement,
+    });
+  }
+
+  agent.spentToday = Number((agent.spentToday + Number(request.amount)).toFixed(6));
+  agent.balance = Number((agent.balance - Number(request.amount)).toFixed(6));
+
+  return storeIdempotency(idempotency, {
+    status: "approved",
+    reason: "acp_topup_authorized",
+    risk: decision.risk,
+    acp,
+    receipt,
+    settlement,
+  });
+}
+
+function acpJobRisk(agent, request) {
+  let score = 12;
+  const reasons = [];
+  const providers = agent.acpProviders || [];
+
+  if (!providers.length) {
+    score += 15;
+    reasons.push("provider_allowlist_not_configured");
+  } else if (!providers.includes(request.provider)) {
+    score += 45;
+    reasons.push("provider_not_allowlisted");
+  }
+  if (request.amount > agent.perTransactionLimit) {
+    score += 18;
+    reasons.push("above_per_transaction_limit");
+  }
+  if (agent.spentToday + request.amount > agent.dailyLimit) {
+    score += 22;
+    reasons.push("above_daily_limit");
+  }
+  if (String(request.memo || "").toLowerCase().includes("private key")) {
+    score += 60;
+    reasons.push("metadata_leak_risk");
+  }
+  if (request.jobType === "subscription" && Number(request.durationDays || 0) > 30) {
+    score += 8;
+    reasons.push("long_subscription_window");
+  }
+
+  return {
+    score: Math.min(score, 99),
+    reasons: reasons.length ? reasons : ["policy_matched"],
+  };
+}
+
+function checkAcpJob(agentId, payload) {
+  const agent = getAgent(agentId);
+  const amount = Number(payload.amount ?? payload.priceUsdc);
+  const provider = isAddress(payload.provider) ? getAddress(payload.provider) : null;
+
+  if (!provider || !amount || amount <= 0) {
+    return {
+      status: "blocked",
+      reason: "invalid_acp_job_request",
+      risk: { score: 99, reasons: ["missing_provider_or_amount"] },
+    };
+  }
+  if (agent.paused) {
+    return {
+      status: "blocked",
+      reason: "agent_paused",
+      risk: { score: 99, reasons: ["agent_spend_authority_suspended"] },
+    };
+  }
+
+  const request = {
+    provider,
+    amount,
+    memo: payload.memo || payload.task || "",
+    jobType: payload.jobType || "job",
+    durationDays: payload.durationDays,
+  };
+  const risk = acpJobRisk(agent, request);
+  const providers = agent.acpProviders || [];
+
+  if (providers.length && !providers.includes(provider)) {
+    return { status: "blocked", reason: "provider_not_allowlisted", risk, provider };
+  }
+  if (amount > agent.perTransactionLimit) {
+    return { status: "pending", reason: "owner_approval_required", risk, provider };
+  }
+  if (agent.spentToday + amount > agent.dailyLimit) {
+    return { status: "blocked", reason: "daily_limit_exceeded", risk, provider };
+  }
+  if (risk.score >= 75) {
+    return { status: "blocked", reason: "risk_threshold_exceeded", risk, provider };
+  }
+
+  return {
+    status: "approved",
+    reason: "acp_job_within_policy",
+    risk,
+    provider,
+    guidance: {
+      fundVia: "acp_topup",
+      nextStep: `acp client create-job --provider ${provider} --budget ${amount}`,
+    },
+  };
+}
+
 function agentSnapshot(agentId) {
   const agent = getAgent(agentId);
   return {
@@ -1352,6 +1647,20 @@ function updateAgentPolicy(agentId, payload) {
   if (Object.hasOwn(payload, "paused")) {
     patch.paused = Boolean(payload.paused);
   }
+  if (Object.hasOwn(payload, "acpWallet")) {
+    if (payload.acpWallet === null) {
+      patch.acpWallet = null;
+    } else if (isAddress(payload.acpWallet)) {
+      patch.acpWallet = getAddress(payload.acpWallet);
+    } else {
+      const error = new Error("invalid_acp_wallet");
+      error.status = 400;
+      throw error;
+    }
+  }
+  if (Object.hasOwn(payload, "acpProviders")) {
+    patch.acpProviders = normalizedAddressArray(payload.acpProviders, "acp_providers");
+  }
 
   Object.assign(agent, patch);
   persistState();
@@ -1409,6 +1718,43 @@ async function handlePost(pathname, req, res) {
       reason: result.reason,
     });
     jsonResponse(res, 200, result);
+    return;
+  }
+
+  if (pathname === "/v1/acp/link_wallet") {
+    const result = linkAcpWallet(agentId, body);
+    auditEvent({ event: "acp_link_wallet", agentId, status: result.status, acpWallet: result.acpWallet, policyDigest: result.policyDigest });
+    jsonResponse(res, 200, result);
+    return;
+  }
+
+  if (pathname === "/v1/acp/check_job") {
+    const result = checkAcpJob(agentId, body);
+    auditEvent({
+      event: "acp_check_job",
+      agentId,
+      status: result.status,
+      reason: result.reason,
+      provider: result.provider || body.provider || null,
+      amount: body.amount ?? body.priceUsdc ?? null,
+    });
+    jsonResponse(res, 200, { agentId, ...result });
+    return;
+  }
+
+  if (pathname === "/v1/acp/topup") {
+    const result = await acpTopup(agentId, body);
+    auditEvent({
+      event: "acp_topup",
+      agentId,
+      status: result.status,
+      reason: result.reason,
+      acpWallet: result.acp?.wallet || null,
+      amount: body.amount ?? null,
+      txHash: result.txHash || null,
+      receiptHash: result.receipt?.receiptHash || null,
+    });
+    jsonResponse(res, result.status === "not_configured" ? 503 : 200, result);
     return;
   }
 
@@ -1621,8 +1967,12 @@ export {
   agents,
   approvals,
   receipts,
+  acpTopup,
   approvalList,
+  checkAcpJob,
+  checkAcpTopup,
   checkPolicy,
+  linkAcpWallet,
   payX402,
   requestBudget,
   resolveApproval,

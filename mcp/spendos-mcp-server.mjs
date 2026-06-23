@@ -201,6 +201,78 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "link_acp_wallet",
+    title: "Link ACP Wallet",
+    description: "Link the agent's Virtuals ACP (EconomyOS) wallet address and optional provider allowlist to the SpendOS policy.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agentId: { type: "string", description: "SpendOS agent id. Defaults to the configured server agent." },
+        acpWallet: { type: "string", description: "EVM address of the agent's ACP/EconomyOS wallet on Base." },
+        acpProviders: {
+          type: "array",
+          items: { type: "string" },
+          description: "Allowlisted ACP provider wallet addresses the agent may hire.",
+        },
+      },
+      required: ["acpWallet"],
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+  },
+  {
+    name: "check_acp_job",
+    title: "Check ACP Job",
+    description: "Evaluate a Virtuals ACP job or subscription against SpendOS policy before funding escrow with acp client create-job.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agentId: { type: "string", description: "SpendOS agent id. Defaults to the configured server agent." },
+        provider: { type: "string", description: "ACP provider agent wallet address offering the job." },
+        amount: { type: "number", description: "USDC price of the ACP job or subscription." },
+        memo: { type: "string", description: "Job requirement memo or offering description." },
+        jobType: { type: "string", enum: ["job", "subscription"], description: "ACP engagement type." },
+        durationDays: { type: "number", description: "Subscription window in days (7/15/30/90)." },
+      },
+      required: ["provider", "amount"],
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+  },
+  {
+    name: "acp_topup",
+    title: "ACP Wallet Top-up",
+    description: "Authorize a policy-bound USDC top-up from the SpendOS vault to the agent's linked ACP wallet for funding ACP escrow jobs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agentId: { type: "string", description: "SpendOS agent id. Defaults to the configured server agent." },
+        amount: { type: "number", description: "USDC amount to transfer to the linked ACP wallet." },
+        task: { type: "string", description: "Task memo describing why the ACP wallet needs funds." },
+        submit: { type: "boolean", description: "Submit the settlement transaction through the operator signer." },
+        idempotencyKey: { type: "string", description: "Stable retry key to prevent duplicate top-ups." },
+      },
+      required: ["amount"],
+      additionalProperties: false,
+    },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+  },
+  {
     name: "get_receipts",
     title: "Get Receipts",
     description: "Return receipt-bound spend history for audit, accounting, and agent evals.",
@@ -362,6 +434,15 @@ async function callSpendOsTool(name, args = {}, { spendos = new SpendOS({ baseUr
     }
     if (name === "submit_settlement") {
       return toolResult(await spendos.submitSettlement(args));
+    }
+    if (name === "link_acp_wallet") {
+      return toolResult(await spendos.linkAcpWallet(args));
+    }
+    if (name === "check_acp_job") {
+      return toolResult(await spendos.checkAcpJob(args));
+    }
+    if (name === "acp_topup") {
+      return toolResult(await spendos.acpTopup(args));
     }
     if (name === "get_receipts") {
       return toolResult(await spendos.getReceipts({ agent: args.agent }));

@@ -117,6 +117,27 @@ export class SpendOS {
     return this.pauseAgent({ agent, paused: false });
   }
 
+  async linkAcpWallet(payload = {}) {
+    return this.#request("/v1/acp/link_wallet", {
+      method: "POST",
+      body: this.#withAgent(payload),
+    });
+  }
+
+  async checkAcpJob(payload = {}) {
+    return this.#request("/v1/acp/check_job", {
+      method: "POST",
+      body: this.#withAgent(payload),
+    });
+  }
+
+  async acpTopup(payload = {}) {
+    return this.#request("/v1/acp/topup", {
+      method: "POST",
+      body: this.#withAgent(payload),
+    });
+  }
+
   async analyzeWalletDemo({ agent = this.agent } = {}) {
     return this.#request("/v1/demo/analyze_wallet", {
       method: "POST",

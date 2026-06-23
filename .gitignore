@@ -10,3 +10,4 @@ data/spendos-state.json
 data/spendos-audit.ndjson
 *.tmp
 .DS_Store
+.vercel

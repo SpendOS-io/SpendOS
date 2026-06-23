@@ -57,6 +57,25 @@ Endpoints:
 - `GET /v1/receipts`
 - `POST /v1/pause_agent`
 - `POST /v1/demo/analyze_wallet`
+- `POST /v1/acp/link_wallet`
+- `POST /v1/acp/check_job`
+- `POST /v1/acp/topup`
+
+## Virtuals ACP / EconomyOS Integration
+
+SpendOS acts as the policy layer in front of a Virtuals EconomyOS agent wallet:
+
+1. `POST /v1/acp/link_wallet` binds the agent's ACP wallet (from `acp wallet address`)
+   and an optional provider allowlist to the SpendOS policy. Both fields enter the
+   policy digest.
+2. `POST /v1/acp/check_job` is the soft gate: before the agent runs
+   `acp client create-job`, the proxy scores the provider, price, memo, and
+   subscription window against limits and the provider allowlist.
+3. `POST /v1/acp/topup` is the policy-bound dispenser: an approved top-up produces
+   `spendUSDC` calldata that pays the agent's own ACP wallet (service `acp-topup`),
+   so escrow funding stays inside the daily and per-transaction envelope. Top-ups
+   above the per-transaction limit enter the owner approval queue. Pass
+   `submit: true` to broadcast through the operator signer.
 
 ## Agent SDK
 
@@ -72,6 +91,9 @@ The SDK wraps the proxy endpoints for autonomous agents and MCP servers:
 - `getReceipts`
 - `pauseAgent`
 - `resumeAgent`
+- `linkAcpWallet`
+- `checkAcpJob`
+- `acpTopup`
 - `analyzeWalletDemo`
 
 ## Next Protocol Steps

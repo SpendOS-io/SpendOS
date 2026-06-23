@@ -179,6 +179,11 @@ const pageMeta = {
     code: "DRY-RUN / COST",
     summary: "Dry-run autonomous tasks before giving the agent live spend authority.",
   },
+  acp: {
+    title: "ACP",
+    code: "VIRTUALS / ACP",
+    summary: "Virtuals Agent Commerce Protocol integration — policy-bound top-ups and job management for agent-to-agent payments on Base.",
+  },
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -248,6 +253,8 @@ let receiptFilter = "all";
 let selectedReceiptId = "";
 let proxyReceiptCache = {};
 let proxySyncInterval = null;
+let acpLastCheckJob = null;
+let acpLastTopup = null;
 
 const BASE_CHAIN_ID = "0x2105";
 const BASE_NETWORK = {
@@ -565,6 +572,7 @@ function syncAgentFromProxyPolicy(policy = {}) {
     agent.fullAddress = policy.vaultAddress;
     agent.address = policy.vaultAddress.slice(0, 6) + "..." + policy.vaultAddress.slice(-4);
   }
+  if (policy.acpWallet) agent.acpWallet = policy.acpWallet;
 }
 
 async function syncAgentStateFromProxy(agentId) {
@@ -1504,6 +1512,95 @@ function renderSimulationPage(agent) {
   `;
 }
 
+function renderAcpPage(agent) {
+  const acpWallet = agent.acpWallet || "";
+  const shortWallet = acpWallet ? `${acpWallet.slice(0, 8)}...${acpWallet.slice(-6)}` : "Not linked";
+  const checkStatus = acpLastCheckJob?.status || "—";
+  const checkRisk = acpLastCheckJob?.risk?.score != null ? acpLastCheckJob.risk.score : "—";
+  const checkBadge = acpLastCheckJob?.status === "approved" ? "approved" : acpLastCheckJob?.status ? "blocked" : "";
+  const topupStatus = acpLastTopup?.status || "—";
+  const topupTx = acpLastTopup?.txHash ? `${acpLastTopup.txHash.slice(0, 12)}...` : "—";
+  const topupAmount = acpLastTopup?.amount != null ? `${acpLastTopup.amount} USDC` : "—";
+
+  return `
+    ${pageHeader(pageMeta.acp)}
+    <section class="operation-panel vault-status-panel">
+      <div class="section-head">
+        <span class="meta-label">ACP wallet</span>
+        <span class="mono">${acpWallet ? "LINKED" : "NOT LINKED"}</span>
+      </div>
+      <div class="vault-readiness">
+        <div><span>ACP wallet</span><strong class="mono">${shortWallet}</strong></div>
+        <div><span>Network</span><strong>Base (8453)</strong></div>
+        <div><span>Agent ID</span><strong class="mono">${window.SPENDOS_CONFIG?.acpAgentId ? `${window.SPENDOS_CONFIG.acpAgentId.slice(0, 12)}...` : "019eef94..."}</strong></div>
+        <div><span>Vault balance</span><strong>${agent.balance} USDC</strong></div>
+        <div><span>Available today</span><strong>${(agent.dailyLimit - agent.spent).toFixed(2)} USDC</strong></div>
+        <div><span>Per-tx cap</span><strong>${agent.txLimit} USDC</strong></div>
+      </div>
+    </section>
+    <section class="operation-panel payment-composer">
+      <div class="section-head">
+        <span class="meta-label">Check job (policy gate)</span>
+        <span class="mono">${checkBadge ? `LAST: ${checkStatus.toUpperCase()}` : "NOT RUN"}</span>
+      </div>
+      <div class="form-row">
+        <label class="field-label" for="acpJobAmount">Amount (USDC)</label>
+        <input id="acpJobAmount" class="field" type="number" min="0.01" step="0.01" value="2" style="width:120px" />
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <label class="field-label" for="acpJobProvider">Provider address</label>
+        <input id="acpJobProvider" class="field mono" type="text" value="0x6ea29564e2045f83b0cc31d416e33d8752ba8105" style="width:100%;max-width:420px" />
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <label class="field-label" for="acpJobDesc">Memo</label>
+        <input id="acpJobDesc" class="field" type="text" value="Trend report for AI agent payment infrastructure" style="width:100%;max-width:400px" />
+      </div>
+      <div class="integration-actions" style="margin-top:12px">
+        <button class="inline-action" data-action="check-acp-job">Check Job</button>
+      </div>
+      ${acpLastCheckJob ? `
+      <div class="vault-readiness" style="margin-top:16px">
+        <div><span>Status</span><strong class="${checkBadge}">${checkStatus}</strong></div>
+        <div><span>Risk score</span><strong>${checkRisk} / 100</strong></div>
+        ${acpLastCheckJob.reason ? `<div><span>Reason</span><strong>${acpLastCheckJob.reason}</strong></div>` : ""}
+      </div>` : ""}
+    </section>
+    <section class="operation-panel code-panel">
+      <div class="section-head">
+        <span class="meta-label">Top-up ACP wallet</span>
+        <span class="mono">${acpLastTopup ? `LAST: ${topupStatus.toUpperCase()}` : "NOT RUN"}</span>
+      </div>
+      <div class="form-row">
+        <label class="field-label" for="acpTopupAmount">Amount (USDC)</label>
+        <input id="acpTopupAmount" class="field" type="number" min="0.01" step="0.01" value="2" style="width:120px" />
+      </div>
+      <div class="integration-actions" style="margin-top:12px">
+        <button class="inline-action" data-action="acp-topup">Top Up</button>
+      </div>
+      ${acpLastTopup ? `
+      <div class="vault-readiness" style="margin-top:16px">
+        <div><span>Status</span><strong>${topupStatus}</strong></div>
+        <div><span>Amount</span><strong>${topupAmount}</strong></div>
+        <div><span>Tx hash</span><strong class="mono">${topupTx}</strong></div>
+        ${acpLastTopup.txHash ? `<div><span>Basescan</span><strong><a href="https://basescan.org/tx/${acpLastTopup.txHash}" target="_blank" rel="noopener" style="color:inherit">View →</a></strong></div>` : ""}
+      </div>` : ""}
+    </section>
+    <section class="operation-panel tab-output">
+      <div class="section-head">
+        <span class="meta-label">How it works</span>
+        <span class="mono">FLOW / A+B</span>
+      </div>
+      <div class="tab-content">
+        ${metricCards([
+          ["Policy gate (A)", "check_job validates the job against daily limit, per-tx cap, and risk score before any on-chain action. Risk score 0–30 = auto-approve."],
+          ["Vault top-up (B)", "acp_topup moves USDC from the SpendOS vault to the ACP agent wallet on-chain, recording a policyDigest for auditability."],
+          ["Create job", "After top-up, use acp client create-job --offering-name trendReport --chain-id 8453 to post a real job on Base mainnet."],
+        ])}
+      </div>
+    </section>
+  `;
+}
+
 function renderLogs() {
   const modeLine = `MODE: ${activeMode.toUpperCase()} autonomous spend enforcement`;
   const pauseLine = isPaused ? "PAUSE: agent spend authority suspended" : "AUTHORITY: policy-bound spend active";
@@ -1531,6 +1628,7 @@ function paintView() {
     risk: renderRiskPage,
     receipts: renderReceiptsPage,
     simulation: renderSimulationPage,
+    acp: renderAcpPage,
   };
   elements.viewPage.innerHTML = renderers[activeTab](agent);
 }
@@ -2134,6 +2232,60 @@ async function runMcpTestCall() {
   showToast("MCP FALLBACK: local policy engine evaluated request.");
 }
 
+async function runCheckAcpJob() {
+  if (!proxyOnline) { showToast("ACP: proxy offline — start backend first."); return; }
+  const amount = Number(document.getElementById("acpJobAmount")?.value || 2);
+  const provider = document.getElementById("acpJobProvider")?.value?.trim() || "0x6ea29564e2045f83b0cc31d416e33d8752ba8105";
+  const memo = document.getElementById("acpJobDesc")?.value?.trim() || "ACP job";
+  const agent = agents[activeAgent];
+  const acpWallet = agent.acpWallet;
+  if (!acpWallet) { showToast("ACP: no ACP wallet linked."); return; }
+  showToast("ACP CHECK: running policy gate...");
+  try {
+    const result = await proxyRequest("/v1/acp/check_job", {
+      agentId: activeAgent,
+      acpWallet,
+      amount,
+      provider,
+      memo,
+    });
+    acpLastCheckJob = result;
+    saveState();
+    renderView(true);
+    showToast(`ACP CHECK: ${result.status?.toUpperCase() || "DONE"} — risk ${result.risk?.score ?? "—"}/100`);
+    logs.unshift(`ACP: check_job ${result.status} (risk ${result.risk?.score ?? "—"}) for ${amount} USDC`);
+    logs.splice(8);
+  } catch (err) {
+    showToast(`ACP CHECK ERROR: ${err.message}`);
+  }
+}
+
+async function runAcpTopup() {
+  if (!proxyOnline) { showToast("ACP: proxy offline — start backend first."); return; }
+  const amount = Number(document.getElementById("acpTopupAmount")?.value || 2);
+  const agent = agents[activeAgent];
+  const acpWallet = agent.acpWallet;
+  if (!acpWallet) { showToast("ACP: no ACP wallet linked."); return; }
+  showToast("ACP TOP-UP: sending USDC on-chain...");
+  try {
+    const result = await proxyRequest("/v1/acp/topup", {
+      agentId: activeAgent,
+      acpWallet,
+      amount,
+      task: "ACP job funding via SpendOS dashboard",
+      submit: true,
+    });
+    acpLastTopup = result;
+    await fullProxySync(true);
+    renderView(true);
+    showToast(`ACP TOP-UP: ${result.status?.toUpperCase() || "DONE"} — ${amount} USDC`);
+    logs.unshift(`ACP: topup ${result.status} ${result.amount ?? amount} USDC → ${acpWallet.slice(0, 8)}... tx:${result.txHash?.slice(0, 10) ?? "—"}`);
+    logs.splice(8);
+  } catch (err) {
+    showToast(`ACP TOP-UP ERROR: ${err.message}`);
+  }
+}
+
 function applyPolicyTemplate(template) {
   const agent = agents[activeAgent];
   if (template === "research") {
@@ -2511,6 +2663,8 @@ function wireControls() {
         showToast("ATTESTATION EXPORT: policy authority bundle downloaded.");
       }
       if (action === "copy-vault-abi") writeClipboard(JSON.stringify(vaultContractInterface(), null, 2), "VAULT INTERFACE COPIED: contract surface ready.");
+      if (action === "check-acp-job") runCheckAcpJob();
+      if (action === "acp-topup") runAcpTopup();
       return;
     }
 
